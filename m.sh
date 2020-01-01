@@ -1,3 +1,22 @@
+#!/bin/bash
+#
+# Cronos Build Script V3.0
+# For Exynos7870
+# edit for exynos7904 by Minhker
+# Coded by BlackMesa/AnanJaser1211 @2019
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#      http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 # Main Dir
 CR_DIR=$(pwd)
 # Define toolchan path
@@ -34,7 +53,7 @@ export PLATFORM_VERSION=$CR_PLATFORM
 export $CR_ARCH
 ##########################################
 # Device specific Variables [SM-A305F]
-CR_DTSFILES_A305F="exynos7870-j7y17lte_eur_open_00.dtb exynos7870-j7y17lte_eur_open_01.dtb exynos7870-j7y17lte_eur_open_02.dtb exynos7870-j7y17lte_eur_open_03.dtb exynos7870-j7y17lte_eur_open_04.dtb exynos7870-j7y17lte_eur_open_05.dtb exynos7870-j7y17lte_eur_open_06.dtb exynos7870-j7y17lte_eur_open_07.dtb"
+CR_DTSFILES_A305F="exynos7904-a30_swa_open_00.dtb exynos7904-a30_swa_open_01.dtb exynos7904-a30_swa_open_02.dtb"
 CR_CONFG_A305F=exynos7885-a30v2_defconfig
 CR_VARIANT_A305F=A305F
 
