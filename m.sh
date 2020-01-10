@@ -35,7 +35,7 @@ CR_KERNEL=$CR_DIR/arch/arm64/boot/Image
 CR_DTB=$CR_DIR/boot.img-dtb
 # Kernel Name and Version
 CR_VERSION=V1
-CR_NAME=MinhKer_K_Pie
+CR_NAME=MinhKer_A305F_Pie
 # Thread count
 CR_JOBS=5
 # Target android version and platform (7/n/8/o/9/p)
@@ -152,16 +152,16 @@ echo "----------------------------------------------"
             CR_CONFG=$CR_CONFG_A305F
             CR_DTSFILES=$CR_DTSFILES_A305F
             BUILD_ZIMAGE
-            BUILD_DTB
-            PACK_BOOT_IMG
+           # BUILD_DTB
+          #  PACK_BOOT_IMG
             echo " "
             echo "----------------------------------------------"
             echo "$CR_VARIANT kernel build finished."
-            echo "$CR_VARIANT Ready at $CR_OUT"
-            echo "Combined DTB Size = $sizT Kb"
-            echo "Press Any key to end the script"
-            echo "----------------------------------------------"
-            read -n1 -r key
+           # echo "$CR_VARIANT Ready at $CR_OUT"
+          #  echo "Combined DTB Size = $sizT Kb"
+          #  echo "Press Any key to end the script"
+          #  echo "----------------------------------------------"
+           # read -n1 -r key
        #     break
         #    ;;
     #    "Exit")
