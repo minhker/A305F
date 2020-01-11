@@ -1118,6 +1118,46 @@ static __init int cpufreq_read_cpu_max_c2(char *cpu_max_c2)
 }
 __setup("cpu_max_c2=", cpufreq_read_cpu_max_c2);
 
+
+
+
+static unsigned long arg_cpu_min_c1 = 208000;
+
+static int __init cpufreq_read_cpu_min_c1(char *cpu_min_c1)
+{
+	unsigned long ui_khz;
+	int ret;
+
+	ret = kstrtoul(cpu_min_c1, 0, &ui_khz);
+	if (ret)
+		return -EINVAL;
+
+	arg_cpu_min_c1 = ui_khz;
+	printk("cpu_min_c1=%lu\n", arg_cpu_min_c1);
+	return ret;
+}
+__setup("cpu_min_c1=", cpufreq_read_cpu_min_c1);
+
+unsigned long arg_cpu_min_c2 = 728000;
+
+static __init int cpufreq_read_cpu_min_c2(char *cpu_min_c2)
+{
+	unsigned long ui_khz;
+	int ret;
+
+	ret = kstrtoul(cpu_min_c2, 0, &ui_khz);
+	if (ret)
+		return -EINVAL;
+
+	arg_cpu_min_c2 = ui_khz;
+	printk("cpu_min_c2=%lu\n", arg_cpu_min_c2);
+	return ret;
+}
+__setup("cpu_min_c2=", cpufreq_read_cpu_min_c2);
+
+
+
+
 static __init int init_domain(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
 {
@@ -1145,8 +1185,10 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 
 	if (domain->id == 0) {
 		domain->max_freq = arg_cpu_max_c1;
+		domain->min_freq = arg_cpu_min_c1;
 	} else if (domain->id == 1) {
 		domain->max_freq = arg_cpu_max_c2;
+		domain->min_freq = arg_cpu_min_c2;
 	}
 
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
