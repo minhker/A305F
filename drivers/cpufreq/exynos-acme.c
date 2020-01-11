@@ -1115,6 +1115,8 @@ static __init int cpufreq_read_cpu_max_c2(char *cpu_max_c2)
 	arg_cpu_max_c2 = ui_khz;
 	printk("cpu_max_c2=%lu\n", arg_cpu_max_c2);
 	return ret;
+}
+__setup("cpu_max_c2=", cpufreq_read_cpu_max_c2);
 
 static __init int init_domain(struct exynos_cpufreq_domain *domain,
 					struct device_node *dn)
@@ -1140,11 +1142,13 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 #endif
 	if (!of_property_read_u32(dn, "min-freq", &val))
 		domain->min_freq = max(domain->min_freq, val);
-if (domain->id == 0) {
+
+	if (domain->id == 0) {
 		domain->max_freq = arg_cpu_max_c1;
 	} else if (domain->id == 1) {
 		domain->max_freq = arg_cpu_max_c2;
 	}
+
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
 
