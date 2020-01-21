@@ -855,7 +855,7 @@ static __init int init_table(struct exynos_cpufreq_domain *domain)
 			domain->freq_table[index].frequency = table[index];
 			/* Add OPP table to first cpu of domain */
 			dev_pm_opp_add(get_cpu_device(cpumask_first(&domain->cpus)),
-					table[index] * 1000, volt_table[index]);
+					table[index] * 1000, volt_table[index]-25000); //try drop litte volt of clock cpu
 		}
 
 		/* Initialize table of DVFS manager constraint */
@@ -1084,7 +1084,7 @@ static int init_dm(struct exynos_cpufreq_domain *domain,
 	return register_exynos_dm_freq_scaler(domain->dm_type, dm_scaler);
 }
 
-static unsigned long arg_cpu_max_c1 = 1690000;
+static unsigned long arg_cpu_max_c1 = 1794000; //1690 1794 1898 2002
 
 static int __init cpufreq_read_cpu_max_c1(char *cpu_max_c1)
 {
@@ -1101,7 +1101,7 @@ static int __init cpufreq_read_cpu_max_c1(char *cpu_max_c1)
 }
 __setup("cpu_max_c1=", cpufreq_read_cpu_max_c1);
 
-unsigned long arg_cpu_max_c2 = 2184000;
+unsigned long arg_cpu_max_c2 = 2080000; //2184 //2288 //2384 //
 
 static __init int cpufreq_read_cpu_max_c2(char *cpu_max_c2)
 {
@@ -1117,9 +1117,6 @@ static __init int cpufreq_read_cpu_max_c2(char *cpu_max_c2)
 	return ret;
 }
 __setup("cpu_max_c2=", cpufreq_read_cpu_max_c2);
-
-
-
 
 static unsigned long arg_cpu_min_c1 = 208000;
 
@@ -1138,7 +1135,7 @@ static int __init cpufreq_read_cpu_min_c1(char *cpu_min_c1)
 }
 __setup("cpu_min_c1=", cpufreq_read_cpu_min_c1);
 
-unsigned long arg_cpu_min_c2 = 728000;
+unsigned long arg_cpu_min_c2 = 520000; //520 //380 
 
 static __init int cpufreq_read_cpu_min_c2(char *cpu_min_c2)
 {
@@ -1187,7 +1184,7 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 		domain->max_freq = arg_cpu_max_c1;
 		domain->min_freq = arg_cpu_min_c1;
 	} else if (domain->id == 1) {
-		domain->max_freq = arg_cpu_max_c2;
+		domain->max_freq = 2184000;
 		domain->min_freq = arg_cpu_min_c2;
 	}
 
