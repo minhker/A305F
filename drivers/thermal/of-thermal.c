@@ -574,8 +574,51 @@ thermal_zone_of_sensor_register(struct device *dev, int sensor_id, void *data,
 
 			for (i = 0; i < function->num_of_range && instance != NULL; ++i) {
 				temperature = function->range_list[i].lower_bound_temperature;
+				if(function->range_list[i].lower_bound_temperature==20&&function->range_list[i].max_frequency==2184000)
+			function->range_list[i].max_frequency=2288000;
+		if(function->range_list[i].lower_bound_temperature==76&&function->range_list[i].max_frequency==1768000)
+			function->range_list[i].max_frequency=2184000;
+		if(function->range_list[i].lower_bound_temperature==81&&function->range_list[i].max_frequency==1768000)
+			function->range_list[i].max_frequency=2080000;
+		if(function->range_list[i].lower_bound_temperature==86&&function->range_list[i].max_frequency==1560000)
+			function->range_list[i].max_frequency=1976000;
+		if(function->range_list[i].lower_bound_temperature==91&&function->range_list[i].max_frequency==728000)
+			function->range_list[i].max_frequency=1872000;
+		//for litte
+		if(function->range_list[i].lower_bound_temperature==20&&function->range_list[i].max_frequency==1690000)
+			function->range_list[i].max_frequency=1794000;
+		if(function->range_list[i].lower_bound_temperature==76&&function->range_list[i].max_frequency==1690000)
+			function->range_list[i].max_frequency=1690000;
+		if(function->range_list[i].lower_bound_temperature==81&&function->range_list[i].max_frequency==1690000)
+			function->range_list[i].max_frequency=1586000;
+		//for gpu
+		if(function->range_list[i].lower_bound_temperature==20&&function->range_list[i].max_frequency==1100000)
+			function->range_list[i].max_frequency=1300000;
+		if(function->range_list[i].lower_bound_temperature==76&&function->range_list[i].max_frequency==1100000)
+			function->range_list[i].max_frequency=1200000;
 				freq = function->range_list[i].max_frequency;
-
+								if(function->range_list[i].lower_bound_temperature==20&&function->range_list[i].max_frequency==2184000)
+			function->range_list[i].max_frequency=2288000;
+		if(function->range_list[i].lower_bound_temperature==76&&function->range_list[i].max_frequency==1768000)
+			function->range_list[i].max_frequency=2184000;
+		if(function->range_list[i].lower_bound_temperature==81&&function->range_list[i].max_frequency==1768000)
+			function->range_list[i].max_frequency=2080000;
+		if(function->range_list[i].lower_bound_temperature==86&&function->range_list[i].max_frequency==1560000)
+			function->range_list[i].max_frequency=1976000;
+		if(function->range_list[i].lower_bound_temperature==91&&function->range_list[i].max_frequency==728000)
+			function->range_list[i].max_frequency=1872000;
+		//for litte
+		if(function->range_list[i].lower_bound_temperature==20&&function->range_list[i].max_frequency==1690000)
+			function->range_list[i].max_frequency=1794000;
+		if(function->range_list[i].lower_bound_temperature==76&&function->range_list[i].max_frequency==1690000)
+			function->range_list[i].max_frequency=1690000;
+		if(function->range_list[i].lower_bound_temperature==81&&function->range_list[i].max_frequency==1690000)
+			function->range_list[i].max_frequency=1586000;
+		//for gpu
+		if(function->range_list[i].lower_bound_temperature==20&&function->range_list[i].max_frequency==1100000)
+			function->range_list[i].max_frequency=1300000;
+		if(function->range_list[i].lower_bound_temperature==76&&function->range_list[i].max_frequency==1100000)
+			function->range_list[i].max_frequency=1200000;
 				switch (zone) {
 #if !defined(CONFIG_SOC_EXYNOS7883)
 					case MNGS_QUAD :
