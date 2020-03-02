@@ -264,7 +264,7 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	if (max_freq < data->max_freq) {
 		rcu_read_lock();
 		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_max = (unsigned long)data->max_freq;
+		tmp_max = (unsigned long)max_freq;
 		target_opp = devfreq_recommended_opp(data->dev, &tmp_max, flags);
 		if (IS_ERR(target_opp)) {
 			rcu_read_unlock();
@@ -272,7 +272,7 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 			return PTR_ERR(target_opp);
 		}
 
-		max_freq = dev_pm_opp_get_freq(target_opp);
+		data->max_freq = dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
 
