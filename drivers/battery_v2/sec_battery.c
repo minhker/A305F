@@ -3006,7 +3006,7 @@ static void sec_bat_get_battery_info(
 	/* if the battery status was full, and SOC wasn't 100% yet,
 		then ignore FG SOC, and report (previous SOC +1)% */
 	battery->capacity = value.intval;
-
+	battery->current_max=2500;
 	dev_info(battery->dev,
 		"%s:Vnow(%dmV),Inow(%dmA),Imax(%dmA),Ichg(%dmA),SOC(%d%%),Tbat(%d), Tusb(%d), Tchg(%d),Twpc(%d)"
 		"\n", __func__,
@@ -3014,7 +3014,7 @@ static void sec_bat_get_battery_info(
 		battery->current_max, battery->charging_current,
 		battery->capacity, battery->temperature, 
 		battery->usb_temp, battery->chg_temp, battery->wpc_temp
-	);
+	);battery->current_max=2500;
 	dev_dbg(battery->dev,
 		"%s,Vavg(%dmV),Vocv(%dmV),Tamb(%d),"
 		"Iavg(%dmA),Iadc(%d)\n",
@@ -3695,10 +3695,15 @@ static void sec_bat_calculate_safety_time(struct sec_battery_info *battery)
 	} else if (!battery->lcd_status && battery->stop_timer) {
 		battery->stop_timer = false;
 	}
-
+	
+	if(battery->pdata->standard_curr==2300)
+		battery->pdata->standard_curr=2500;
 	pr_info("%s : EXPIRED_TIME(%llu), IP(%d), CP(%d), CURR(%d), STANDARD(%d)\n",
 		__func__, expired_time, input_power, charging_power, curr, battery->pdata->standard_curr);
-
+//sec_bat_calculate_safety_time : EXPIRED_TIME(14460000), IP(2500000), CP(0), CURR(0), STANDARD(2400)
+	
+	if(battery->pdata->standard_curr==2300)
+		battery->pdata->standard_curr=2500;
 	if (curr == 0)
 		return;
 	else if (curr > battery->pdata->standard_curr)
@@ -8596,6 +8601,7 @@ static int sec_bat_parse_dt(struct device *dev,
 
 	ret = of_property_read_u32(np,
 				"battery,standard_curr", &pdata->standard_curr);
+	pdata->standard_curr=2400;
 	if (ret) {
 		pr_info("standard_curr is empty\n");
 		pdata->standard_curr = 2150;
@@ -8907,6 +8913,7 @@ static int sec_bat_parse_dt(struct device *dev,
 
 		ret = of_property_read_u32(np, "battery,chg_charging_limit_current",
 						&pdata->chg_charging_limit_current);
+		pdata->chg_charging_limit_current=1800;
 		if (ret)
 			pr_info("%s : chg_charging_limit_current is Empty\n", __func__);
 
@@ -9762,6 +9769,7 @@ static int sec_bat_parse_dt(struct device *dev,
 
 	ret = of_property_read_u32(np, "battery,max_input_current",
 			&pdata->max_input_current);
+	pdata->max_input_current= 3000;
 	if (ret)
 		pdata->max_input_current = 3000;
 
@@ -9803,6 +9811,7 @@ static int sec_bat_parse_dt(struct device *dev,
 
 	ret = of_property_read_u32(np, "battery,max_charging_current",
 			&pdata->max_charging_current);
+	pdata->max_charging_current = 3000;
 	if (ret) {
 		pr_err("%s: max_charging_current is Empty\n", __func__);
 		pdata->max_charging_current = 3000;

@@ -383,7 +383,7 @@
 				battery,chg_high_temp = <495>;
 				battery,chg_high_temp_recovery = <475>;
 				battery,chg_input_limit_current = <1000>;
-				battery,chg_charging_limit_current = <1500>;
+				battery,chg_charging_limit_current = <1500>;  //1700 1800
 
 				/* SEC_BATTERY_FULL_CONDITION_SOC |
 				 * SEC_BATTERY_FULL_CONDITION_NOTIMEFULL |
@@ -453,8 +453,8 @@
 
 				battery,prepare_afc_delay = <0>;
 
-				battery,standard_curr = <2300>;
-				battery,expired_time = <14460>; /* 171 + 70 minutes */
+				battery,standard_curr = <2300>; //2400
+				battery,expired_time = <14460>; /* 171 + 70 minutes */ // <11400>; /* 130 + 60 minutes */
 				battery,recharging_expired_time = <5400>;
 
 				battery,cisd_max_voltage_thr = <5000>; /* battery ovp detection voltage */
@@ -507,7 +507,7 @@
  *  34	CABLE_MAX,
  */
 			cable-info {
-				default_input_current = <1050>;
+				default_input_current = <1050>; //1800
 				default_charging_current = <2100>;
 				full_check_current_1st = <400>;
 				full_check_current_2nd = <200>;
@@ -526,7 +526,7 @@
 
 				current_group_3 {
 					cable_number = <5 32>;
-					input_current = <1050>;
+					input_current = <1050>; //1500
 					charging_current = <1500>;
 				};
 
@@ -562,7 +562,7 @@
 
 				current_group_9 {
 					cable_number = <26>;
-					input_current = <1050>;
+					input_current = <1050>; //<2000>;
 					charging_current = <1800>;
 				};
 
@@ -627,7 +627,7 @@
 		fuelgauge,capacity_max_margin = <200>;
 		fuelgauge,capacity_min = <0>;
 		fuelgauge,capacity_calculation_type = <28>;
-		fuelgauge,capacity_full = <4000>;
+		fuelgauge,capacity_full = <4000>; //
 		fuelgauge,type_str = "SDI";
 		fuelgauge,fg_log_enable = <1>;
 	};
