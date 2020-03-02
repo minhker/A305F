@@ -38,7 +38,7 @@
 #include <linux/sysfs_helpers.h>
 #ifdef CONFIG_SOC_EXYNOS7885
 #define GPU_MAX_VOLT		1100000
-#define GPU_MIN_VOLT		400000
+#define GPU_MIN_VOLT		300000
 #define GPU_VOLT_STEP		6250
 #else
 #error "Please define gpu voltage ranges for current SoC."
@@ -307,7 +307,7 @@ static ssize_t set_volt_table(struct device *dev, struct device_attribute *attr,
 		}
 	}
 
-	ipa_update();
+	//ipa_update();
 	spin_unlock_irqrestore(&platform->gpu_dvfs_spinlock, flags);
 
 	return count;
