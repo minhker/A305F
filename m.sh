@@ -34,8 +34,8 @@ CR_KERNEL=$CR_DIR/arch/arm64/boot/Image
 # Compiled dtb by dtbtool
 CR_DTB=$CR_DIR/boot.img-dtb
 # Kernel Name and Version
-CR_VERSION=V1
-CR_NAME=MinhKer_A305F_Pie
+CR_VERSION=V9
+CR_NAME=MinhKer_Pie
 # Thread count
 CR_JOBS=5
 # Target android version and platform (7/n/8/o/9/p)
@@ -77,8 +77,6 @@ fi
 
 BUILD_ZIMAGE()
 {
-	echo "----------------------------------------------"
-	echo " "
 	echo "Building zImage for $CR_VARIANT"
 	export LOCALVERSION=-$CR_NAME-$CR_VERSION-$CR_VARIANT-$CR_DATE
 	make  $CR_CONFG
@@ -117,18 +115,18 @@ PACK_BOOT_IMG()
 	echo "Building Boot.img for $CR_VARIANT"
 	cp -rf $CR_RAMDISK/* $CR_AIK
     # Copy Ramdisk
-    cp -rf $CR_RAMDISK/* $CR_AIK
-	# Move Compiled kernel and dtb to A.I.K Folder
-cp $CR_KERNEL /home/m/minhker/MINHKA_kernelpie_a305f/MINHKA/a305f/zimage
+   	 cp -rf $CR_RAMDISK/* $CR_AIK
+	# Move Compiled kernel to A.I.K Folder
+	# cp $CR_KERNEL /home/m/minhker/MINHKA_kernelpie_a305f/MINHKA/a305f/zimage MINHKA_kernelpie_a305f_zimage Image
+	cp $CR_KERNEL /home/m/share/KERNEL/MINHKA_kernelpie_a305f_zimage/Image
 	mv $CR_KERNEL $CR_AIK/split_img/boot.img-zImage
-cp $CR_DTB /home/m/minhker/MINHKA_kernelpie_a305f/MINHKA/a305f/dtb
-	mv $CR_DTB $CR_AIK/split_img/boot.img-dtb
 	# Create boot.img
 	$CR_AIK/repackimg.sh
 	# Remove red warning at boot
 	echo -n "SEANDROIDENFORCE" » $CR_AIK/image-new.img
-	echo "coping..."
-	cp $CR_AIK/image-new.img  /home/m/minhker/KERNEL/MINHKA_kernelpie_a305f/MINHKA/a305f/boot.img
+	echo "coping... to /home/m/share/KERNEL/MINHKA_kernelpie_a305f/MINHKA/a305f/boot.img"
+	cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernelpie_a305f/MINHKA/a305f/boot.img
+	cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernelpie_a305fv2/boot.img
 	# Move boot.img to out dir
 	echo "moving..."
 	mv $CR_AIK/image-new.img $CR_OUT/$CR_NAME-$CR_VERSION-$CR_DATE-$CR_VARIANT.img
@@ -153,7 +151,7 @@ echo "----------------------------------------------"
             CR_DTSFILES=$CR_DTSFILES_A305F
             BUILD_ZIMAGE
            # BUILD_DTB
-          #  PACK_BOOT_IMG
+            PACK_BOOT_IMG
             echo " "
             echo "----------------------------------------------"
             echo "$CR_VARIANT kernel build finished."
