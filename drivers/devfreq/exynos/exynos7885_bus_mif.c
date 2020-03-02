@@ -47,8 +47,16 @@ static unsigned int ect_find_constraint_freq(struct ect_minlock_domain *ect_doma
 	unsigned int i;
 
 	for (i =0; i < ect_domain->num_of_level; i++)
+{
+		if(ect_domain->level[i].main_frequencies==1794000)
+			ect_domain->level[i].sub_frequencies=533000;
+		if(ect_domain->level[i].main_frequencies==1352000)
+			ect_domain->level[i].sub_frequencies=267000;
+		if(ect_domain->level[i].main_frequencies==1014000)
+			ect_domain->level[i].sub_frequencies=133000;
+		//exynos_dm/constraint_table_dm_mif
 		if (ect_domain->level[i].main_frequencies == freq) break;
-
+}
 	return ect_domain->level[i].sub_frequencies;
 }
 #endif
@@ -246,20 +254,17 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 		dev_err(data->dev, "failed to enable MIF\n");
 		return -EINVAL;
 	}
-
 	max_freq = (u32)cal_dfs_get_max_freq(data->dfs_id);
 	if (!max_freq) {
 		dev_err(data->dev, "failed get max frequency\n");
 		return -EINVAL;
 	}
-
 	dev_info(data->dev, "max_freq: %uKhz, get_max_freq: %uKhz\n",
 			data->max_freq, max_freq);
-
 	if (max_freq < data->max_freq) {
 		rcu_read_lock();
 		flags |= DEVFREQ_FLAG_LEAST_UPPER_BOUND;
-		tmp_max = (unsigned long)max_freq;
+		tmp_max = (unsigned long)data->max_freq;
 		target_opp = devfreq_recommended_opp(data->dev, &tmp_max, flags);
 		if (IS_ERR(target_opp)) {
 			rcu_read_unlock();
@@ -267,7 +272,7 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 			return PTR_ERR(target_opp);
 		}
 
-		data->max_freq = dev_pm_opp_get_freq(target_opp);
+		max_freq = dev_pm_opp_get_freq(target_opp);
 		rcu_read_unlock();
 	}
 
@@ -308,10 +313,12 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	for (i = 0; i < data->max_state; i++) {
 		if (data->opp_list[i].freq > data->max_freq ||
 			data->opp_list[i].freq < data->min_freq)
-			dev_pm_opp_disable(data->dev, (unsigned long)data->opp_list[i].freq);
+			 data->max_freq=data->opp_list[0].freq ; // for max freq is 2
+			//dev_pm_opp_disable(data->dev, (unsigned long)data->opp_list[i].freq); //for full available_frequencie
 	}
 
 	data->devfreq_profile.initial_freq = cal_dfs_get_boot_freq(data->dfs_id);
+
 	data->devfreq_profile.suspend_freq = cal_dfs_get_resume_freq(data->dfs_id);
 
 	ret = exynos7885_mif_constraint_parse(data, min_freq, max_freq);
@@ -320,7 +327,7 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 		return -EINVAL;
 	}
 
-	ret = exynos_acpm_set_init_freq(data->dfs_id, data->devfreq_profile.initial_freq);
+	ret = exynos_acpm_set_init_freq(data->dfs_id, data->devfreq_profile.initial_freq); //
 	if (ret) {
 		dev_err(data->dev, "failed to set init freq\n");
 		return -EINVAL;
