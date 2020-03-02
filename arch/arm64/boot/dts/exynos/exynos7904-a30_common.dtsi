@@ -50,18 +50,11 @@
 							dev = "/dev/block/platform/13500000.dwmmc0/by-name/vendor";
 							type = "ext4";
 							mnt_flags = "ro";
-							fsmgr_flags = "wait,avb";
+							fsmgr_flags = "wait,barrier=1";
 						};
 						product {
 							compatible = "android,product";
 							dev = "/dev/block/platform/13500000.dwmmc0/by-name/product";
-							type = "ext4";
-							mnt_flags = "ro";
-							fsmgr_flags = "wait,avb";
-						};
-						system {
-							compatible = "android,system";
-							dev = "/dev/block/platform/13500000.dwmmc0/by-name/SYSTEM";
 							type = "ext4";
 							mnt_flags = "ro";
 							fsmgr_flags = "wait";
@@ -69,7 +62,7 @@
 					};
 				};
 			};
-	
+
 			but_zones: but_zones {
 				#list-but-cells = <3>;
 			};
@@ -805,11 +798,18 @@
 			};
 			cpufreq {
 				domain@1 {
-					max-freq = <1768000>;
+					max-freq = <2288000>;
 
 					dm-constraints {
 						mif-perf {
-							table = < 1768000 1794000
+							table = < 
+								  2392000 1794000
+								  2288000 1794000
+								  2184000 1794000
+								  2080000 1794000
+								  1976000 1794000
+								  1872000 1794000
+								  1768000 1794000
 								  1664000 1539000
 								  1560000 1539000
 								  1352000 1014000
@@ -841,13 +841,20 @@
 					device_type = "cpufreq-userctrl";
 					shared-cpus = "6-7";
 
-					user-default-qos = <936000>;
+					user-default-qos = <312000>;
 
 					min-limit {
 						ctrl-type = <PM_QOS_MIN_LIMIT>;
 						execution-mode = <AARCH64_MODE>;
 							/* big	    lit */
-						table = < 1768000  1586000
+						table = < 
+							  2392000  1794000
+							  2288000  1794000
+							  2184000  1794000
+							  2080000  1690000
+							  1976000  1690000
+							  1872000  1586000
+							  1768000  1586000
 							  1664000  449000
 							  1560000  449000
 							  1352000  449000
@@ -860,7 +867,13 @@
 						ctrl-type = <PM_QOS_MAX_LIMIT>;
 						execution-mode = <AARCH64_MODE>;
 							/* big	    lit */
-						table = < 1768000 1586000
+						table = < 2392000 1794000
+							  2288000 1794000
+							  2184000 1794000
+							  2080000 1690000
+							  1976000 1690000
+							  1872000 1586000
+							  1768000 1586000
 							  1664000 1586000
 							  1560000 1586000
 							  1352000 1586000
