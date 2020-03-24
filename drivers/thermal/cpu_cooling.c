@@ -224,12 +224,12 @@ static int cpufreq_thermal_notifier(struct notifier_block *nb,
 		clipped_freq = cpufreq_dev->clipped_freq;
 
 		if (policy->max > clipped_freq) {
-			cpufreq_verify_within_limits(policy, 0, clipped_freq);
-			exynos_ss_thermal(NULL, 0, cpufreq_dev->cool_dev->type, clipped_freq);
 			if(clipped_freq==2184000)
 				clipped_freq=2288000;
 			if(clipped_freq==1690000)
 				clipped_freq=1794000;
+			cpufreq_verify_within_limits(policy, 0, clipped_freq);
+			exynos_ss_thermal(NULL, 0, cpufreq_dev->cool_dev->type, clipped_freq);
 			pr_info("%s: type: %s, freq: %lu\n", __func__,
 					cpufreq_dev->cool_dev->type, clipped_freq);
 		}
