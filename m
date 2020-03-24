@@ -34,7 +34,7 @@ CR_KERNEL=$CR_DIR/arch/arm64/boot/Image
 # Compiled dtb by dtbtool
 CR_DTB=$CR_DIR/boot.img-dtb
 # Kernel Name and Version
-CR_VERSION=V12
+CR_VERSION=V13_9_last
 CR_NAME=MinhKer_Pie
 # Thread count
 CR_JOBS=5
@@ -59,21 +59,21 @@ CR_VARIANT_A305F=A305F
 
 # Script functions
 
-#read -p "Clean source (y/n) > " yn
-#if [ "$yn" = "Y" -o "$yn" = "y" ]; then
- #    echo "Clean Build"    
- #    make clean && make mrproper    
-   #  rm -r -f $CR_DTB
-  #   rm -rf $CR_DTS/.*.tmp
-   #  rm -rf $CR_DTS/.*.cmd
-   #  rm -rf $CR_DTS/*.dtb      
-#else
+read -p "Clean source (y/n) > " yn
+if [ "$yn" = "Y" -o "$yn" = "y" ]; then
+     echo "Clean Build"    
+    make clean && make mrproper    
+     rm -r -f $CR_DTB
+     rm -rf $CR_DTS/.*.tmp
+     rm -rf $CR_DTS/.*.cmd
+     rm -rf $CR_DTS/*.dtb      
+else
      echo "Dirty Build"
      rm -r -f $CR_DTB
      rm -rf $CR_DTS/.*.tmp
      rm -rf $CR_DTS/.*.cmd
      rm -rf $CR_DTS/*.dtb          
-#fi
+fi
 
 BUILD_ZIMAGE()
 {
@@ -114,20 +114,14 @@ PACK_BOOT_IMG()
 	echo " "
 	echo "Building Boot.img for $CR_VARIANT"
 	cp -rf $CR_RAMDISK/* $CR_AIK
-    # Copy Ramdisk
    	 cp -rf $CR_RAMDISK/* $CR_AIK
-	# Move Compiled kernel to A.I.K Folder
-	# cp $CR_KERNEL /home/m/minhker/MINHKA_kernelpie_a305f/MINHKA/a305f/zimage MINHKA_kernelpie_a305f_zimage Image
-	cp $CR_KERNEL /home/m/share/KERNEL/MINHKA_kernelpie_a305f_zimage/Image
-	cp $CR_KERNEL /home/m/share/KERNEL/MINHKA_kernelpie_a305fv12/Image
 	mv $CR_KERNEL $CR_AIK/split_img/boot.img-zImage
-	# Create boot.img
 	$CR_AIK/repackimg.sh
 	# Remove red warning at boot
 	echo -n "SEANDROIDENFORCE" » $CR_AIK/image-new.img
 	echo "coping boot.img... to..."
-	#cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernelpie_a305f/MINHKA/a305f/boot.img
-	cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernelpie_a305fv12/boot.img
+	cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernelpie_a305fv13/boot.img
+	#cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernelpie_a305fv13b/boot.img
 	# Move boot.img to out dir
 	echo "moving..."
 	mv $CR_AIK/image-new.img $CR_OUT/$CR_NAME-$CR_VERSION-$CR_DATE-$CR_VARIANT.img
@@ -139,13 +133,7 @@ clear
 echo "----------------------------------------------"
 echo "$CR_NAME $CR_VERSION Build Script"
 echo "----------------------------------------------"
-#PS3='Please select your option : '
-#menuvar=("SM-A305F-G" "Exit")
-#select menuvar in "${menuvar[@]}"
-#do
-#    case $menuvar in
-       
- #       "SM-A305F-G")
+
             clear
             echo "Starting $CR_VARIANT_A305F kernel build..."
             CR_VARIANT=$CR_VARIANT_A305F
@@ -154,19 +142,9 @@ echo "----------------------------------------------"
             BUILD_ZIMAGE
            # BUILD_DTB
             PACK_BOOT_IMG
-           # echo " "
-           # echo "----------------------------------------------"
             echo "$CR_VARIANT kernel build finished."
            # echo "$CR_VARIANT Ready at $CR_OUT"
           #  echo "Combined DTB Size = $sizT Kb"
           #  echo "Press Any key to end the script"
           #  echo "----------------------------------------------"
-           # read -n1 -r key
-       #     break
-        #    ;;
-    #    "Exit")
-        #    break
-       #     ;;
-       # *) echo Invalid option.;;
-    #esac
-#done
+
