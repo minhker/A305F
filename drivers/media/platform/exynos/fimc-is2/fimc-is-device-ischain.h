@@ -52,12 +52,10 @@
 
 #define NI_BACKUP_MAX			10
 
-/* TODO: remove AA_SCENE_MODE_REMOSAIC */
 #ifdef ENABLE_REMOSAIC_CAPTURE_WITH_ROTATION
-#define CHK_REMOSAIC_SCN(sceneMode)	\
-	(((sceneMode == AA_SCENE_MODE_REMOSAIC) \
-	|| (sceneMode == AA_SCENE_MODE_REMOSAIC_PURE_BAYER_ONLY) \
-	|| (sceneMode == AA_SCENE_MODE_REMOSAIC_MFHDR_PURE_BAYER_ONLY)) ? 1 : 0)
+#define CHK_REMOSAIC_SCN(captureIntent)	\
+	(((captureIntent == AA_CAPTURE_INTENT_STILL_CAPTURE_REMOSAIC_SINGLE) \
+	|| (captureIntent == AA_CAPTURE_INTENT_STILL_CAPTURE_REMOSAIC_MFHDR_DYNAMIC_SHOT)) ? 1 : 0)
 #endif
 
 /*global state*/

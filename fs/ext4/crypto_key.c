@@ -23,11 +23,13 @@
 #include "sdp/fscrypto_sdp_dek_private.h"
 #endif
 
+#ifdef CONFIG_SDP_ENHANCED
 #ifdef CONFIG_EXT4CRYPT_SDP
 static int derive_fek(struct inode *inode,
 		const struct ext4_encryption_context *ctx,
 		struct ext4_crypt_info *crypt_info,
 		u8 *fek, u32 fek_len);
+#endif
 #endif
 
 static void derive_crypt_complete(struct crypto_async_request *req, int rc)
@@ -254,7 +256,7 @@ int ext4_get_encryption_info(struct inode *inode)
 		return -EINVAL;
 	res = 0;
 
-	crypt_info = kmem_cache_alloc(ext4_crypt_info_cachep, GFP_KERNEL);
+	crypt_info = kmem_cache_alloc(ext4_crypt_info_cachep, GFP_NOFS);
 	if (!crypt_info)
 		return -ENOMEM;
 
@@ -375,11 +377,17 @@ int ext4_get_encryption_info(struct inode *inode)
 			res = -ENOMEM;
 			goto out;
 		}
+#ifndef CONFIG_SDP_ENHANCED
+		crypt_info->ci_sdp_info->sdp_flags = FSCRYPT_SDP_PARSE_FLAG_SDP_ONLY(ctx.knox_flags);
 
+		res = fscrypt_sdp_get_key_if_sensitive(inode, crypt_info, ctx.nonce);
+#else
 		res = fscrypt_sdp_update_sdp_info(inode, &ctx, crypt_info);
+#endif
 		if (res)
 			goto out;
 
+#ifdef CONFIG_SDP_ENHANCED
 		if (fscrypt_sdp_is_classified(crypt_info)) {
 			res = derive_fek(inode, &ctx, crypt_info, raw_key, ext4_encryption_key_size(mode));
 			if (res)
@@ -387,6 +395,7 @@ int ext4_get_encryption_info(struct inode *inode)
 			fscrypt_sdp_update_conv_status(crypt_info);
 			goto sdp_dek;
 		}
+#endif
 	}
 #endif
 	res = ext4_derive_key(&ctx, master_key->raw, raw_key);
@@ -394,8 +403,10 @@ int ext4_get_encryption_info(struct inode *inode)
 	if (res)
 		goto out;
 
+#ifdef CONFIG_SDP_ENHANCED
 #ifdef CONFIG_EXT4CRYPT_SDP
 sdp_dek:
+#endif
 #endif
 
 got_key:
@@ -441,8 +452,13 @@ private_crypt:
 	if (cmpxchg(&ei->i_crypt_info, NULL, crypt_info) == NULL)
 		crypt_info = NULL;
 #ifdef CONFIG_EXT4CRYPT_SDP
-	if (crypt_info == NULL) //Call only when i_crypt_info is loaded initially
+	if (crypt_info == NULL) { //Call only when i_crypt_info is loaded initially
+#ifdef CONFIG_SDP_ENHANCED
 		fscrypt_sdp_finalize_tasks(inode, raw_key, (res ? res : ext4_encryption_key_size(mode)));
+#else
+		fscrypt_sdp_finalize_tasks(inode);
+#endif
+	}
 #endif
 out:
 	if (res == -ENOKEY)
@@ -460,6 +476,7 @@ int ext4_has_encryption_key(struct inode *inode)
 	return (ei->i_crypt_info != NULL);
 }
 
+#ifdef CONFIG_SDP_ENHANCED
 #ifdef CONFIG_EXT4CRYPT_SDP
 /* The function is only for regular files */
 static int derive_fek(struct inode *inode,
@@ -605,4 +622,5 @@ out:
 	return res;
 }
 EXPORT_SYMBOL(fscrypt_get_encryption_kek);
+#endif
 #endif
