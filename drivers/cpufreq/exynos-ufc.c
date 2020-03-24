@@ -17,7 +17,6 @@
 #include <linux/cpumask.h>
 #include <linux/cpufreq.h>
 #include <linux/pm_opp.h>
-
 #include <soc/samsung/exynos-cpu_hotplug.h>
 
 #include "exynos-acme.h"
@@ -52,22 +51,24 @@ static ssize_t show_cpufreq_table(struct kobject *kobj,
 			if (freq == CPUFREQ_ENTRY_INVALID)
 				continue;
 
-			count += snprintf(&buf[count], 10, "%d \n",
-					freq >> (scale * SCALE_SIZE));
+			count += snprintf(&buf[count], 10, "%d\n",
+					freq);
 		}
 
 		scale++;
 	}
 
-	//count += snprintf(&buf[count - 1], 2, "a\n");
 
 	return count;
 }
 static ssize_t show_cpufreq_tabl2e(struct kobject *kobj,
 				struct attribute *attr, char *buf)
 {
-	struct list_head *domains = get_domain_list();
 	struct exynos_cpufreq_domain *domain;
+unsigned int *volt_table;
+volt_table = kzalloc(sizeof(unsigned int) * domain->table_size, GFP_KERNEL);
+cal_dfs_get_asv_table(domain->cal_id, volt_table);
+	struct list_head *domains = get_domain_list();
 	ssize_t count = 0;
 	int i, scale = 0;
 
@@ -82,14 +83,12 @@ static ssize_t show_cpufreq_tabl2e(struct kobject *kobj,
 				continue;
 
 			count += snprintf(&buf[count], 10, "%d %d\n",
-					freq >> (scale * SCALE_SIZE),
-					freq >> (scale * SCALE_SIZE));
+					freq,volt_table[i]);
 		}
 
 		scale++;
 	}
 
-	count += snprintf(&buf[count - 1], 2, "a\n");
 
 	return count;
 }
@@ -103,24 +102,26 @@ static ssize_t show_volt_table(struct kobject *kobj,
 
 	if (ap_fuse == 2)
 		scale++;
-
+	unsigned int *volt_table;
+	
 	list_for_each_entry_reverse(domain, domains, list) {
+
+volt_table = kzalloc(sizeof(unsigned int) * domain->table_size, GFP_KERNEL);
+	fvmap_get_voltage_table(2, volt_table);
 		for (i = 0; i < domain->table_size; i++) {
 			unsigned int freq = domain->freq_table[i].frequency;
-
 			if (freq == CPUFREQ_ENTRY_INVALID)
 				continue;
-			if (i<=17)
-			count += snprintf(&buf[count], 10, "%d \n",
-					freq >> (scale * SCALE_SIZE));
+
+			count += snprintf(&buf[count], 10, "%d %d\n",
+					freq,volt_table[i]);
 		}
 
 		scale++;
 	}
 
-	count += snprintf(&buf[count - 1], 2, "\n");
 
-	return count - 1;
+	return count;
 }
 
 static ssize_t show_cpufreq_min_limit(struct kobject *kobj,
@@ -663,8 +664,8 @@ __ATTR(execution_mode_change, 0644,
 
 static __init void init_sysfs(void)
 {
-	if (sysfs_create_file(power_kobj, &volt_table.attr))
-		pr_err("failed to create volt_table node\n");
+	if (sysfs_create_file(power_kobj, &cpufreq_table.attr))
+		pr_err("failed to create cpufreq_table node\n");
 	if (sysfs_create_file(power_kobj, &cpufreq_table2e.attr))
 		pr_err("failed to create cpufreq_table2e node\n");
 	if (sysfs_create_file(power_kobj, &volt_table.attr))
@@ -789,16 +790,26 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 			{
 				if(freq==2496000||freq==2392000||freq==2288000)
 					ufc->info.freq_table[index].limit_freq=1794000;
-				if(freq==2184000||freq==2080000||freq==1976000||freq==1872000)
+				if(freq==2184000||freq==2080000||freq==1976000)
 					ufc->info.freq_table[index].limit_freq=1794000;
+				if(freq==1872000)
+					ufc->info.freq_table[index].limit_freq=1690000;
+				if(freq==1664000)
+					ufc->info.freq_table[index].limit_freq=1482000;
+				if(freq==1560000)
+					ufc->info.freq_table[index].limit_freq=1352000;
 				if(freq==312000||freq==520000||freq==208000||freq==728000)
 					ufc->info.freq_table[index].limit_freq=208000;
+				if(freq==728000)
+					ufc->info.freq_table[index].limit_freq=343000;
 			}
 			if(ufc->info.ctrl_type==2){
 				if(freq==2496000||freq==2392000||freq==2288000)
 					ufc->info.freq_table[index].limit_freq=1794000;
-				if(freq==2184000||freq==2080000||freq==1976000||freq==1872000)
+				if(freq==2184000||freq==2080000||freq==1976000)
 					ufc->info.freq_table[index].limit_freq=1794000;
+				if(freq==1872000)
+					ufc->info.freq_table[index].limit_freq=1690000;
 			}
 			for (c_index = 0; c_index < size / 2; c_index++) {
 				if (freq <= table[c_index].master_freq)
@@ -813,10 +824,26 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 			{
 				if(freq==2496000||freq==2392000||freq==2288000)
 					ufc->info.freq_table[index].limit_freq=1794000;
-				if(freq==2184000||freq==2080000||freq==1976000||freq==1872000)
+				if(freq==2184000||freq==2080000||freq==1976000)
 					ufc->info.freq_table[index].limit_freq=1794000;
+				if(freq==1872000)
+					ufc->info.freq_table[index].limit_freq=1690000;
+				if(freq==1664000)
+					ufc->info.freq_table[index].limit_freq=1482000;
+				if(freq==1560000)
+					ufc->info.freq_table[index].limit_freq=1352000;
 				if(freq==312000||freq==520000||freq==208000||freq==728000)
 					ufc->info.freq_table[index].limit_freq=208000;
+				if(freq==728000)
+					ufc->info.freq_table[index].limit_freq=343000;
+			}
+			if(ufc->info.ctrl_type==2){
+				if(freq==2496000||freq==2392000||freq==2288000)
+					ufc->info.freq_table[index].limit_freq=1794000;
+				if(freq==2184000||freq==2080000||freq==1976000)
+					ufc->info.freq_table[index].limit_freq=1794000;
+				if(freq==1872000)
+					ufc->info.freq_table[index].limit_freq=1690000;
 			}
 			pr_info("freq : %u kHz - ufc->info.freq_table[index].limit_freq : %u kHz minhker98dt\n",
 					freq,
