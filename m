@@ -49,21 +49,23 @@ export $CR_ARCH
 CR_CONFG_A305F=exynos7885-a30v2_Q_defconfig
 CR_VARIANT_A305F=A305F
 
-#Script functions
+# Script functions
 
-read -p "Clean source (y/n) > " yn
-if [ "$yn" = "Y" -o "$yn" = "y" ]; then
-     echo "Clean Build"    
-     make clean && make mrproper  
-     rm -rf $CR_DTS/.*.tmp
-     rm -rf $CR_DTS/.*.cmd
-     rm -rf $CR_DTS/*.dtb      
-else
+#read -p "Clean source (y/n) > " yn
+#if [ "$yn" = "Y" -o "$yn" = "y" ]; then
+ #    echo "Clean Build"    
+ #    make clean && make mrproper    
+   #  rm -r -f $CR_DTB
+  #   rm -rf $CR_DTS/.*.tmp
+   #  rm -rf $CR_DTS/.*.cmd
+   #  rm -rf $CR_DTS/*.dtb      
+#else
      echo "Dirty Build"
+     rm -r -f $CR_DTB
      rm -rf $CR_DTS/.*.tmp
      rm -rf $CR_DTS/.*.cmd
      rm -rf $CR_DTS/*.dtb          
-fi
+#fi
 
 BUILD_ZIMAGE()
 {
