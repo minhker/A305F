@@ -28,7 +28,7 @@ CR_RAMDISK=$CR_DIR/mk/Ramdisk
 # Compiled image name and location (Image/zImage)
 CR_KERNEL=$CR_DIR/arch/arm64/boot/Image
 # Kernel Name and Version
-CR_VERSION=V14
+CR_VERSION=V14.3_Pro
 CR_NAME=MinhKer_Q
 # Thread count
 CR_JOBS=5
@@ -55,10 +55,10 @@ CR_VARIANT_A305F=A305F
 #if [ "$yn" = "Y" -o "$yn" = "y" ]; then
  #    echo "Clean Build"    
  #    make clean && make mrproper    
-   #  rm -r -f $CR_DTB
-  #   rm -rf $CR_DTS/.*.tmp
-   #  rm -rf $CR_DTS/.*.cmd
-   #  rm -rf $CR_DTS/*.dtb      
+ #    rm -r -f $CR_DTB
+ #    rm -rf $CR_DTS/.*.tmp
+ #    rm -rf $CR_DTS/.*.cmd
+ #    rm -rf $CR_DTS/*.dtb      
 #else
      echo "Dirty Build"
      rm -r -f $CR_DTB
@@ -88,12 +88,13 @@ PACK_BOOT_IMG()
 	echo "Building Boot.img for $CR_VARIANT"
 	cp -rf $CR_RAMDISK/* $CR_AIK
    	 cp -rf $CR_RAMDISK/* $CR_AIK
+	cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_a30_v14.4_pro/Image
 	mv $CR_KERNEL $CR_AIK/split_img/boot.img-zImage
 	$CR_AIK/repackimg.sh
 	# Remove red warning at boot
 	echo -n "SEANDROIDENFORCE" » $CR_AIK/image-new.img
 	echo "coping boot.img... to..."
-	cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernel_Q_a305fv14/boot.img
+	#cp $CR_AIK/image-new.img  /home/m/share/KERNEL/MINHKA_kernel_Q_a30_v14.3_pro/boot.img
 	$CR_AIK/cleanup.sh
 	#pass my ubuntu Lerov-vv
 }
