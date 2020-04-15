@@ -25,10 +25,6 @@
 #include <asm/stack_pointer.h>
 #include <asm/stacktrace.h>
 
-#ifdef CONFIG_SEC_DEBUG_INFINITY_BACKTRACE
-#include <linux/sec_debug.h>
-#endif
-
 /*
  * AArch64 PCS assigns the frame pointer to x29.
  *
@@ -73,12 +69,6 @@ int notrace unwind_frame(struct task_struct *tsk, struct stackframe *frame)
 	frame->sp = fp + 0x10;
 	frame->fp = *(unsigned long *)(fp);
 	frame->pc = *(unsigned long *)(fp + 8);
-
-#ifdef CONFIG_SEC_DEBUG_LIMIT_BACKTRACE
-	if (fp == frame->fp && frame->sp != irq_stack_ptr) {
-		return -EINVAL;
-	}
-#endif
 
 #ifdef CONFIG_FUNCTION_GRAPH_TRACER
 	if (tsk->ret_stack &&

@@ -167,8 +167,6 @@ struct s2mu106_fuelgauge_data {
 	u8 reg_OTP_53;
 	u8 reg_OTP_52;
 
-	int low_voltage_limit_lowtemp;
-	int low_voltage_limit;
 	int low_temp_limit;
 	int temperature;
 
@@ -196,9 +194,6 @@ struct s2mu106_fuelgauge_data {
 	int soc_r;
 	int avg_curr;
 	int topoff_current;
-
-	int i_socr_coeff;
-	int t_socr_coeff;
 #endif
 #if (BATCAP_LEARN)
 	bool learn_start;
@@ -210,8 +205,6 @@ struct s2mu106_fuelgauge_data {
 	int batcap_ocv_fin;
 	int cycle;
 	int soh;
-	u8 batcap_0x0E;
-	u8 batcap_0x0F;
 #endif
 };
 

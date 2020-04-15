@@ -1,13 +1,11 @@
 # SPDX-License-Identifier: GPL-2.0
-dtb-y += exynos/dtbo/exynos7885.dtb
-dtbo-y += exynos/dtbo/exynos7904-a30_swa_open_00.dtbo
-dtbo-y += exynos/dtbo/exynos7904-a30_swa_open_01.dtbo
-dtbo-y += exynos/dtbo/exynos7904-a30_swa_open_02.dtbo
+dts-dirs += exynos
+
+subdir-y          := $(dts-dirs)
+
+always            := $(DTB_LIST)
 
 targets += dtbs
-DTB_LIST  := $(dtb-y) $(dtbo-y)
-always    := $(DTB_LIST)
-
 dtbs: $(addprefix $(obj)/, $(DTB_LIST))
 
-clean-files := *.dtb*
+clean-files       := exynos/*.dtb *.dtb*
