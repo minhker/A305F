@@ -143,7 +143,6 @@ struct mmc_request {
 #ifdef CONFIG_BLOCK
 	int			lat_hist_enabled;
 #endif
-	struct list_head	cmdq_entry;
 };
 
 struct mmc_card;

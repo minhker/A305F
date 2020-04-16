@@ -81,10 +81,10 @@ int client_cbuf_free(struct tee_client *client, uintptr_t addr);
 
 /* GP internal */
 struct client_gp_operation {
-	struct list_head	list;
 	u32			started;
 	u32			slot;
-	int			cancelled;
+	bool			cancelled;
+	struct list_head	list;
 };
 
 /* Called from session when a new operation starts/ends */

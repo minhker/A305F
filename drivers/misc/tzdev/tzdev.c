@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2012-2019 Samsung Electronics, Inc.
+ * Copyright (C) 2012-2016 Samsung Electronics, Inc.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -49,7 +49,6 @@
 #include "tz_iw_boot_log.h"
 #include "tz_iwio.h"
 #include "tz_iwlog.h"
-#include "tz_kernel_api_internal.h"
 #include "tzlog.h"
 #include "tz_mem.h"
 #include "tz_panic_dump.h"
@@ -342,7 +341,6 @@ static int tzdev_run_init_sequence(void)
 
 		tzdev_register_iwis();
 		tz_iwnotify_initialize();
-		tzdev_kapi_init();
 
 		if (atomic_cmpxchg(&tzdev_swd_state, TZDEV_SWD_DOWN, TZDEV_SWD_UP)) {
 			ret = -ESHUTDOWN;

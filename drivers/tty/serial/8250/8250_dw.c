@@ -224,7 +224,7 @@ static void dw8250_set_termios(struct uart_port *p, struct ktermios *termios,
 	unsigned int rate;
 	int ret;
 
-	if (IS_ERR(d->clk))
+	if (IS_ERR(d->clk) || !old)
 		goto out;
 
 	clk_disable_unprepare(d->clk);

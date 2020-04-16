@@ -222,4 +222,4 @@ int __init wakeup_reason_init(void)
 	return 0;
 }
 
-subsys_initcall(wakeup_reason_init);
+late_initcall(wakeup_reason_init);

@@ -36,6 +36,15 @@
 #endif /* CONFIG_CCIC_NOTIFIER */
 #endif /* CONFIG_SEC_PM && CONFIG_MUIC_NOTIFIER */
 
+#ifdef CONFIG_EXYNOS_REBOOT
+extern void mngs_reset_control(int en);
+#else
+static inline void mngs_reset_control(int en)
+{
+	return ;
+}
+#endif
+
 struct exynos_powermode_info {
 	unsigned int	cpd_residency;		/* target residency of cpd */
 	unsigned int	sicd_residency;		/* target residency of sicd */
@@ -132,6 +141,7 @@ static void cluster_enable(unsigned int cpu)
 	unsigned int phycluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
 	cal_cluster_enable(phycluster);
+	mngs_reset_control(1);
 }
 
 static void cluster_disable(unsigned int cpu)
@@ -139,6 +149,7 @@ static void cluster_disable(unsigned int cpu)
 	unsigned int mpidr = cpu_logical_map(cpu);
 	unsigned int phycluster = MPIDR_AFFINITY_LEVEL(mpidr, 1);
 
+	mngs_reset_control(0);
 	cal_cluster_disable(phycluster);
 }
 
@@ -653,7 +664,7 @@ store_one(cpd, cpd_enabled);
 
 attr_rw(cpd);
 #else
-static ssize_t store_cpd_enabled(struct kobject *kobj, struct kobj_attribute *attr,
+static ssize_t store_cpd_enabled(struct kobject *kobj, struct attribute *attr,
 				const char *buf, size_t count)
 {
 	unsigned int cpd[CONFIG_NR_CLUSTERS];
@@ -672,7 +683,7 @@ static ssize_t store_cpd_enabled(struct kobject *kobj, struct kobj_attribute *at
 	return count;
 }
 static ssize_t show_cpd_enabled(struct kobject *kobj,
-				struct kobj_attribute *attr, char *buf)
+				struct attribute *attr, char *buf)
 {
 	ssize_t count = 0;
 	int i = 0;
@@ -686,7 +697,7 @@ static ssize_t show_cpd_enabled(struct kobject *kobj,
 
 	return count;
 }
-static struct kobj_attribute cpd =
+static struct global_attr cpd =
 __ATTR(cpd, 0644, show_cpd_enabled, store_cpd_enabled);
 #endif
 show_one(sicd, sicd_enabled);

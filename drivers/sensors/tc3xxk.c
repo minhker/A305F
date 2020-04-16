@@ -179,10 +179,6 @@ struct tc3xxk_data {
 	struct mutex lock_fac;
 	struct fw_image *fw_img;
 	const struct firmware *fw;
-
-	struct wake_lock grip_wake_lock;
-	struct work_struct irq_work;
-
 	char phys[32];
 	int irq;
 	bool irq_check;
@@ -202,6 +198,7 @@ struct tc3xxk_data {
 	struct pinctrl *pinctrl_irq;
 	struct pinctrl_state *pin_state[4];
 
+	struct wake_lock grip_wake_lock;
 	u16 grip_p_thd;
 	u16 grip_r_thd;
 	u16 grip_n_thd;
@@ -216,11 +213,11 @@ struct tc3xxk_data {
 	int grip_num;
 	struct grip_event_val *grip_ev_val;
 	struct delayed_work debug_work;
-	s32 diff;
 
 #ifdef CONFIG_SEC_FACTORY
 	int irq_count;
 	int abnormal_mode;
+	s32 diff;
 	s32 max_diff;
 #endif
 
@@ -363,13 +360,10 @@ static void tc3xxk_reset(struct tc3xxk_data *data)
 {
 	SENSOR_INFO("\n");
 
-	if (data->irq_check) {
-		data->irq_check = false;
-		disable_irq_wake(data->client->irq);
-		disable_irq_nosync(data->client->irq);
-	}
+	disable_irq_nosync(data->client->irq);
 
 	data->pdata->power(data, false);
+
 	msleep(50);
 
 	data->pdata->power(data, true);
@@ -378,16 +372,13 @@ static void tc3xxk_reset(struct tc3xxk_data *data)
 	if (data->sar_enable)
 		tc3xxk_mode_enable(data->client, TC300K_CMD_SAR_ENABLE);
 
-	if (!data->irq_check) {
-		data->irq_check = true;
-		enable_irq(data->client->irq);
-		enable_irq_wake(data->client->irq);
-	}
+	enable_irq(data->client->irq);
 }
 
 static void tc3xxk_reset_probe(struct tc3xxk_data *data)
 {
 	data->pdata->power(data, false);
+
 	msleep(50);
 
 	data->pdata->power(data, true);
@@ -592,37 +583,29 @@ int tc3xxk_grip_power(void *info, bool on)
 	return 0;
 }
 
-static irqreturn_t tc3xxk_interrupt_handler(int irq, void *data)
+static irqreturn_t tc3xxk_interrupt(int irq, void *dev_id)
 {
-	struct tc3xxk_data *tc3xxk = data;
-
-	SENSOR_INFO("irq = %d\n",irq);
-	if (irq == tc3xxk->irq && irq != -1){
-		wake_lock_timeout(&tc3xxk->grip_wake_lock, 3*HZ);
-		schedule_work(&tc3xxk->irq_work);
-	}
-	return IRQ_HANDLED;
-}
-
-static void tc3xxk_work_func(struct work_struct *work)
-{
-	struct tc3xxk_data *tc3xxk =
-		container_of(work, struct tc3xxk_data, irq_work);
-	struct i2c_client *client = tc3xxk->client;
+	struct tc3xxk_data *data = dev_id;
+	struct i2c_client *client = data->client;
 	int ret, retry;
 	int i = 0;
 	u8 grip_val;
 	bool grip_handle_flag;
 
+	wake_lock(&data->grip_wake_lock);
+
 	SENSOR_INFO("\n");
 
-	if ((!tc3xxk->enabled) || tc3xxk->fw_downloading) {
+	if ((!data->enabled) || data->fw_downloading) {
 		SENSOR_ERR("can't excute\n");
-		return;
+		
+		wake_unlock(&data->grip_wake_lock);
+		
+		return IRQ_HANDLED;
 	}
 
-	tc3xxk_wake_up(client, TC300K_CMD_WAKE_UP);
-
+	ret = tc3xxk_wake_up(client, TC300K_CMD_WAKE_UP);
+	
 	ret = i2c_smbus_read_byte_data(client, TC305K_GRIPCODE);
 	if (ret < 0) {
 		retry = 3;
@@ -634,44 +617,50 @@ static void tc3xxk_work_func(struct work_struct *work)
 				break;
 		}
 		if (retry <= 0) {
-			tc3xxk_reset(tc3xxk);
-			return;
+			tc3xxk_reset(data);
+			wake_unlock(&data->grip_wake_lock);
+			return IRQ_HANDLED;
 		}
 	}
 	grip_val = (u8)ret;
-
-	for (i = 0 ; i < tc3xxk->grip_num * 2 ; i++) {
-		if (tc3xxk->pdata->use_bitmap)
-			grip_handle_flag = (grip_val & tc3xxk->grip_ev_val[i].grip_bitmap);
+	
+	for (i = 0 ; i < data->grip_num * 2 ; i++){		//use 2 grip chanel
+		if (data->pdata->use_bitmap)
+			grip_handle_flag = (grip_val & data->grip_ev_val[i].grip_bitmap);
 		else
-			grip_handle_flag = (grip_val == tc3xxk->grip_ev_val[i].grip_bitmap);
+			grip_handle_flag = (grip_val == data->grip_ev_val[i].grip_bitmap);
 
-		if (grip_handle_flag) {
-			tc3xxk->diff = read_tc3xxk_register_data(tc3xxk, TC305K_1GRIP, TC305K_GRIP_DIFF_DATA);
+		if (grip_handle_flag){
+			if(data->grip_ev_val[i].grip_status == ACTIVE){
+				data->grip_event = ACTIVE;
+				input_report_rel(data->input_dev, REL_MISC, 1);
+			}
+			else{
+				data->grip_event = IDLE;
+				input_report_rel(data->input_dev, REL_MISC, 2);
+			}
+			SENSOR_INFO(
+				"grip %s : %s(0x%02X) ver0x%02x\n",
+				data->grip_ev_val[i].grip_status? "P" : "R",
+				data->grip_ev_val[i].grip_name, grip_val,
+				data->fw_ver);
+
 #ifdef CONFIG_SEC_FACTORY
-			if (tc3xxk->abnormal_mode) {
-				if (tc3xxk->grip_event) {
-					if (tc3xxk->max_diff < tc3xxk->diff)
-						tc3xxk->max_diff = tc3xxk->diff;
-					tc3xxk->irq_count++;
-				}
-			}
+			data->diff = read_tc3xxk_register_data(data, TC305K_1GRIP, TC305K_GRIP_DIFF_DATA); 
+			if (data->abnormal_mode) { 
+				if (data->grip_event) {
+					if (data->max_diff < data->diff) 
+						data->max_diff = data->diff; 
+					data->irq_count++; 
+				} 
+			} 
 #endif
-			if(tc3xxk->grip_ev_val[i].grip_status == ACTIVE) {
-				tc3xxk->grip_event = ACTIVE;
-				input_report_rel(tc3xxk->input_dev, REL_MISC, 1);
-			} else {
-				tc3xxk->grip_event = IDLE;
-				input_report_rel(tc3xxk->input_dev, REL_MISC, 2);
-			}
-
-			SENSOR_INFO("%s : %s(0x%02X), diff : %d, ver0x%02x\n",
-				tc3xxk->grip_ev_val[i].grip_status? "P" : "R",
-				tc3xxk->grip_ev_val[i].grip_name, grip_val,
-				tc3xxk->diff, tc3xxk->fw_ver);
 		}
 	}
-	input_sync(tc3xxk->input_dev);
+	input_sync(data->input_dev);
+
+	wake_unlock(&data->grip_wake_lock);
+	return IRQ_HANDLED;
 }
 
 static int load_fw_in_kernel(struct tc3xxk_data *data)
@@ -1084,7 +1073,7 @@ static int tc3xxk_crc_check(struct tc3xxk_data *data)
 	return 0;
 }
 
-static int tc3xxk_fw_update(struct tc3xxk_data *data, u8 fw_path, bool force, bool probe)
+static int tc3xxk_fw_update(struct tc3xxk_data *data, u8 fw_path, bool force)
 {
 	int retry = 4;
 	int ret;
@@ -1098,7 +1087,7 @@ static int tc3xxk_fw_update(struct tc3xxk_data *data, u8 fw_path, bool force, bo
 		data->md_ver_bin = data->fw_img->second_fw_ver;
 
 		/* read model ver */
-		ret = tc3xxk_get_md_version(data, probe);
+		ret = tc3xxk_get_md_version(data, false);
 		if (ret) {
 			SENSOR_ERR("get md version fail\n");
 			force = 1;
@@ -1130,7 +1119,7 @@ static int tc3xxk_fw_update(struct tc3xxk_data *data, u8 fw_path, bool force, bo
 			continue;
 		}
 
-		ret = tc3xxk_get_fw_version(data, probe);
+		ret = tc3xxk_get_fw_version(data, false);
 		if (ret) {
 			SENSOR_ERR("tc3xxk_get_fw_version fail (%d)\n", retry);
 			continue;
@@ -1141,7 +1130,7 @@ static int tc3xxk_fw_update(struct tc3xxk_data *data, u8 fw_path, bool force, bo
 			continue;
 		}
 
-		ret = tc3xxk_get_md_version(data, probe);
+		ret = tc3xxk_get_md_version(data, false);
 		if (ret) {
 			SENSOR_ERR("tc3xxk_get_md_version fail (%d)\n", retry);
 			continue;
@@ -1205,18 +1194,9 @@ static ssize_t tc3xxk_update_store(struct device *dev,
 
 	data->fw_update_status = TK_UPDATE_DOWN;
 
-	if (data->irq_check) {
-		data->irq_check = false;
-		disable_irq_wake(client->irq);
-		disable_irq(client->irq);
-	}
-	ret = tc3xxk_fw_update(data, fw_path, fw_update_force, false);
-	if (!data->irq_check) {
-		data->irq_check = true;
-		enable_irq(client->irq);
-		enable_irq_wake(client->irq);
-	}
-
+	disable_irq(client->irq);
+	ret = tc3xxk_fw_update(data, fw_path, fw_update_force);
+	enable_irq(client->irq);
 	if (ret < 0) {
 		SENSOR_ERR("fail\n");
 		data->fw_update_status = TK_UPDATE_FAIL;
@@ -1679,7 +1659,7 @@ static ssize_t tc3xxk_grip_check_show(struct device *dev,
 {
 	struct tc3xxk_data *data = dev_get_drvdata(dev);
 
-	SENSOR_ERR("event:%d, diff: %d\n", data->grip_event, data->diff);
+	SENSOR_ERR("event:%d\n", data->grip_event);
 
 	return sprintf(buf, "%d\n", data->grip_event);
 }
@@ -1707,7 +1687,6 @@ static ssize_t tc3xxk_grip_sw_reset(struct device *dev,
 
 	SENSOR_INFO("data(%d)\n", buff);
 
-	tc3xxk_wake_up(data->client, TC300K_CMD_WAKE_UP);
 	tc3xxk_grip_cal_reset(data);
 
 	return count;
@@ -1856,6 +1835,7 @@ static struct device_attribute *sec_grip_attributes[] = {
 	&dev_attr_grip_firm_version_panel,
 	&dev_attr_grip_md_version_phone,
 	&dev_attr_grip_md_version_panel,
+
 	&dev_attr_grip_threshold,
 	&dev_attr_grip2ch_threshold,
 	&dev_attr_grip_total_cap,
@@ -1949,11 +1929,11 @@ static int tc3xxk_fw_check(struct tc3xxk_data *data)
 	if (data->fw_ver == 0xFF) {
 		SENSOR_INFO(
 			"fw version 0xFF, Excute firmware update!\n");
-		ret = tc3xxk_fw_update(data, FW_INKERNEL, true, true);
+		ret = tc3xxk_fw_update(data, FW_INKERNEL, true);
 		if (ret)
 			return -1;
 	} else {
-		ret = tc3xxk_fw_update(data, FW_INKERNEL, false, true);
+		ret = tc3xxk_fw_update(data, FW_INKERNEL, false);
 		if (ret)
 			return -1;
 	}
@@ -2052,6 +2032,7 @@ static int tc3xxk_probe(struct i2c_client *client,
 {
 	struct tc3xxk_platform_data *pdata;
 	struct tc3xxk_data *data;
+	struct input_dev *input_dev;
 	int ret = 0;
 	
 	SENSOR_INFO("\n");
@@ -2093,19 +2074,19 @@ static int tc3xxk_probe(struct i2c_client *client,
 
 	data->pdata = pdata;
 
-	data->input_dev = input_allocate_device();
-	if (!data->input_dev) {
+	input_dev = input_allocate_device();
+	if (!input_dev) {
 		SENSOR_ERR("Failed to allocate memory for input device\n");
 		ret = -ENOMEM;
 		goto err_alloc_input;
 	}
 
+	data->input_dev = input_dev;
 	data->client = client;
-	data->dev = &client->dev;
 
 	if (data->pdata == NULL) {
 		SENSOR_ERR("failed to get platform data\n");
-		input_free_device(data->input_dev);
+		input_free_device(input_dev);
 		ret = -EINVAL;
 		goto err_platform_data;
 	}
@@ -2122,7 +2103,8 @@ static int tc3xxk_probe(struct i2c_client *client,
 
 	ret = tc3xxk_pinctrl_init(data);
 	if (ret < 0) {
-		SENSOR_ERR("Failed to init pinctrl: %d\n", ret);
+		SENSOR_ERR(
+			"Failed to init pinctrl: %d\n", ret);
 		goto err_pinctrl_init;
 	}
 
@@ -2138,55 +2120,56 @@ static int tc3xxk_probe(struct i2c_client *client,
 
 	ret = tc3xxk_fw_check(data);
 	if (ret) {
-		SENSOR_ERR("failed to firmware check(%d)\n", ret);
+		SENSOR_ERR(
+			"failed to firmware check(%d)\n", ret);
 		goto err_fw_check;
 	}
 
 	snprintf(data->phys, sizeof(data->phys),
 		"%s/input0", dev_name(&client->dev));
-	data->input_dev->name = MODULE_NAME;
-	data->input_dev->id.bustype = BUS_I2C;
+	input_dev->name = MODULE_NAME;    // TSN : TRY to parse form Match table
+	input_dev->id.bustype = BUS_I2C;
 
 	data->grip_ev_val = grip_ev;
 	data->grip_num = ARRAY_SIZE(grip_ev)/2;
-	SENSOR_INFO("number of grips = %d\n", data->grip_num);
+	SENSOR_INFO( "number of grips = %d\n", data->grip_num);
 
-	input_set_capability(data->input_dev, EV_REL, REL_MISC);
-	input_set_drvdata(data->input_dev, data);
+	input_set_capability(input_dev, EV_REL, REL_MISC);
+	input_set_drvdata(input_dev, data);
 
-	ret = input_register_device(data->input_dev);
+	ret = input_register_device(input_dev);
 	if (ret) {
 		SENSOR_ERR("fail to register input_dev (%d)\n", ret);
 		goto err_register_input_dev;
 	}
-
+	
 	ret = sensors_create_symlink(&data->input_dev->dev.kobj,
 					data->input_dev->name);
 	if (ret < 0) {
 		SENSOR_ERR("Failed to create sysfs symlink\n");
 		goto err_sysfs_symlink;
 	}
-
+	
 	ret = sysfs_create_group(&data->input_dev->dev.kobj,
 				&tc3xxk_attribute_group);
 	if (ret < 0) {
 		SENSOR_ERR("Failed to create sysfs group\n");
 		goto err_sysfs_group;
 	}
-
-	ret = sensors_register(&data->dev, data, sec_grip_attributes,
-		MODULE_NAME);
+	
+	ret = sensors_register(&data->dev, data, sec_grip_attributes, MODULE_NAME);
 	if (ret) {
 		SENSOR_ERR("could not register grip_sensor(%d)\n", ret);
 		goto err_sensor_register;
 	}
+	data->dev = &client->dev;	
 
 #if defined (CONFIG_VBUS_NOTIFIER)
 	vbus_notifier_register(&data->vbus_nb, tc3xxk_vbus_notification,
 			       VBUS_NOTIFY_DEV_CHARGER);
 #endif
 
-	ret = request_threaded_irq(client->irq, NULL, tc3xxk_interrupt_handler,
+	ret = request_threaded_irq(client->irq, NULL, tc3xxk_interrupt,
 		IRQF_TRIGGER_FALLING | IRQF_ONESHOT, MODEL_NAME, data);
 	if (ret < 0) {
 		SENSOR_ERR("fail to request irq (%d).\n",
@@ -2194,13 +2177,10 @@ static int tc3xxk_probe(struct i2c_client *client,
 		goto err_request_irq;
 	}
 	disable_irq(client->irq);
-
-	data->irq = gpio_to_irq(pdata->gpio_int);
+	
+	data->irq = pdata->gpio_int;
 	data->irq_check = false;
-
-	/* this is the thread function we run on the work queue */
-	INIT_WORK(&data->irq_work, tc3xxk_work_func);
-
+	
 	// default working on stop mode
 	ret = tc3xxk_wake_up(data->client, TC300K_CMD_WAKE_UP);
 	ret = tc3xxk_mode_enable(data->client, TC300K_CMD_SAR_DISABLE);
@@ -2217,18 +2197,18 @@ static int tc3xxk_probe(struct i2c_client *client,
 	schedule_delayed_work(&data->debug_work, msecs_to_jiffies(20000));
 
 	SENSOR_INFO("done\n");
-
 	return 0;
 
 err_request_irq:
+
 	sensors_unregister(data->dev, sec_grip_attributes);
 err_sensor_register:
-	sysfs_remove_group(&data->input_dev->dev.kobj, &tc3xxk_attribute_group);
+	sysfs_remove_group(&input_dev->dev.kobj, &tc3xxk_attribute_group);
 err_sysfs_group:
-	sensors_remove_symlink(&data->input_dev->dev.kobj, data->input_dev->name);
+	sensors_remove_symlink(&data->input_dev->dev.kobj, input_dev->name);
 err_sysfs_symlink:
-	input_unregister_device(data->input_dev);
-	data->input_dev = NULL;
+	input_unregister_device(input_dev);
+	input_dev = NULL;
 err_register_input_dev:
 err_fw_check:
 	data->pdata->power(data, false);
@@ -2267,12 +2247,10 @@ static void tc3xxk_shutdown(struct i2c_client *client)
 
 	SENSOR_INFO("\n");
 
-	disable_irq_wake(data->irq);
-	disable_irq(data->irq);
-	cancel_work_sync(&data->irq_work);
 	cancel_delayed_work_sync(&data->debug_work);
 	device_init_wakeup(&client->dev, false);
 	wake_lock_destroy(&data->grip_wake_lock);
+	disable_irq(client->irq);
 	data->pdata->power(data, false);
 }
 
@@ -2294,7 +2272,7 @@ static int tc3xxk_resume(struct device *dev)
 
 	SENSOR_INFO("sar_enable(%d)\n", data->sar_enable);
 	schedule_delayed_work(&data->debug_work, msecs_to_jiffies(1000));
-
+	
 	return 0;
 }
 

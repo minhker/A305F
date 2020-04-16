@@ -1193,8 +1193,6 @@ int fimc_is_vender_set_torch(u32 aeflashMode)
 		s2mpb02_set_torch_current(true);
 #elif defined(CONFIG_LEDS_S2MU005_FLASH)
 		s2mu005_led_mode_ctrl(S2MU005_FLED_MODE_MOVIE);
-#elif defined(CONFIG_LEDS_S2MU106_FLASH)
-		s2mu106_led_mode_ctrl(S2MU106_FLED_MODE_MOVIE);
 #endif
 		break;
 	case AA_FLASHMODE_START: /*Pre flash mode*/
@@ -1214,8 +1212,6 @@ int fimc_is_vender_set_torch(u32 aeflashMode)
 		sky81296_torch_ctrl(0);
 #elif defined(CONFIG_LEDS_S2MU005_FLASH)
 		s2mu005_led_mode_ctrl(S2MU005_FLED_MODE_OFF);
-#elif defined(CONFIG_LEDS_S2MU106_FLASH)
-		s2mu106_led_mode_ctrl(S2MU106_FLED_MODE_OFF);
 #endif
 		break;
 	default:
@@ -1268,30 +1264,6 @@ int fimc_is_vender_video_s_ctrl(struct v4l2_control *ctrl,
 		ctrl->id = VENDER_S_CTRL;
 		device->group_3aa.intent_ctl.vendor_captureExposureTime = ctrl->value;
 		minfo("[VENDER] s_ctrl vendor_captureExposureTime(%d)\n", device, ctrl->value);
-		break;
-	case V4L2_CID_IS_FORCE_FLASH_MODE:
-		if (device->sensor != NULL) {
-			struct v4l2_subdev *subdev_flash;
-
-			subdev_flash = device->sensor->subdev_flash;
-
-			if (subdev_flash != NULL) {
-				struct fimc_is_flash *flash = NULL;
-
-				flash = (struct fimc_is_flash *)v4l2_get_subdevdata(subdev_flash);
-				FIMC_BUG(!flash);
-
-				minfo("[VENDOR] force flash mode\n", device);
-
-				ctrl->id = V4L2_CID_FLASH_SET_FIRE;
-				if (ctrl->value == CAM2_FLASH_MODE_OFF) {
-					ctrl->value = 0; /* intensity */
-					flash->flash_data.mode = CAM2_FLASH_MODE_OFF;
-					flash->flash_data.flash_fired = false;
-					ret = v4l2_subdev_call(subdev_flash, core, s_ctrl, ctrl);
-				}
-			}
-		}
 		break;
 	case V4L2_CID_IS_CAMERA_TYPE:
 		ctrl->id = VENDER_S_CTRL;

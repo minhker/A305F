@@ -562,24 +562,23 @@ typedef enum ion_event_type {
 	ION_EVENT_TYPE_CLEAR,
 } ion_event_t;
 
-#define ION_EVENT_HEAPNAME	8
 struct ion_event_alloc {
 	void *id;
-	unsigned char heapname[ION_EVENT_HEAPNAME];
+	struct ion_heap *heap;
 	size_t size;
 	unsigned long flags;
 };
 
 struct ion_event_free {
 	void *id;
-	unsigned char heapname[ION_EVENT_HEAPNAME];
+	struct ion_heap *heap;
 	size_t size;
 	bool shrinker;
 };
 
 struct ion_event_mmap {
 	void *id;
-	unsigned char heapname[ION_EVENT_HEAPNAME];
+	struct ion_heap *heap;
 	size_t size;
 };
 
@@ -589,7 +588,7 @@ struct ion_event_shrink {
 
 struct ion_event_clear {
 	void *id;
-	unsigned char heapname[ION_EVENT_HEAPNAME];
+	struct ion_heap *heap;
 	size_t size;
 	unsigned long flags;
 };

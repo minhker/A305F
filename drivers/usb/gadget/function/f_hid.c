@@ -253,7 +253,6 @@ static ssize_t f_hidg_read(struct file *file, char __user *buffer,
 			free_ep_req(hidg->out_ep, req);
  			return ret;
 		}
-	
 	} else {
 		spin_lock_irqsave(&hidg->spinlock, flags);
 		list_add(&list->list, &hidg->completed_out_req);

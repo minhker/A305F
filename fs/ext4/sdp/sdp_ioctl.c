@@ -56,7 +56,6 @@ int fscrypt_sdp_ioctl_get_sdp_info(struct inode *inode, unsigned long arg)
 	return result;
 }
 
-#ifdef CONFIG_SDP_ENHANCED
 int fscrypt_sdp_ioctl_set_sdp_policy(struct inode *inode, unsigned long arg)
 {
 	dek_arg_set_sdp_policy_t req;
@@ -88,7 +87,6 @@ int fscrypt_sdp_ioctl_set_sdp_policy(struct inode *inode, unsigned long arg)
 	}
 	return rc;
 }
-#endif
 
 int fscrypt_sdp_ioctl_set_sensitive(struct inode *inode, unsigned long arg)
 {
@@ -128,11 +126,7 @@ int fscrypt_sdp_ioctl_set_sensitive(struct inode *inode, unsigned long arg)
 			memset(&req, 0, sizeof(dek_arg_set_sensitive_t));
 			result = -EFAULT;
 		} else {
-#ifdef CONFIG_SDP_ENHANCED
 			int rc = fscrypt_sdp_set_sensitive(inode, req.engine_id, NULL);
-#else
-			int rc = fscrypt_sdp_set_sensitive(req.engine_id, inode);
-#endif
 
 			if (rc) {
 				DEK_LOGE("failed to set sensitive rc(%d)\n", rc);
@@ -147,9 +141,7 @@ int fscrypt_sdp_ioctl_set_sensitive(struct inode *inode, unsigned long arg)
 
 int fscrypt_sdp_ioctl_set_protected(struct inode *inode, unsigned long arg)
 {
-#ifdef CONFIG_SDP_ENHANCED
 	dek_arg_set_protected_t req;
-#endif
 	int result = 0;
 
 	/* EXT4CRYPT-dedicated */
@@ -172,7 +164,6 @@ int fscrypt_sdp_ioctl_set_protected(struct inode *inode, unsigned long arg)
 #endif
 		}
 
-#ifdef CONFIG_SDP_ENHANCED
 		memset(&req, 0, sizeof(dek_arg_set_protected_t));
 		if (copy_from_user(&req,
 				(dek_arg_set_protected_t __user *)arg, sizeof(req))) {
@@ -181,9 +172,6 @@ int fscrypt_sdp_ioctl_set_protected(struct inode *inode, unsigned long arg)
 		}
 
 		rc = fscrypt_sdp_set_protected(inode, req.engine_id);
-#else
-		rc = fscrypt_sdp_set_protected(inode);
-#endif
 		if (rc) {
 			DEK_LOGE("failed to set protected rc(%d)\n", rc);
 			result = -EFAULT;
@@ -282,11 +270,7 @@ int fscrypt_sdp_ioctl(struct file *filp, unsigned int cmd, unsigned long arg)
 	case EXT4_IOC_GET_SDP_INFO:
 		return fscrypt_sdp_ioctl_get_sdp_info(inode, arg);
 	case EXT4_IOC_SET_SDP_POLICY:
-#ifdef CONFIG_SDP_ENHANCED
 		return fscrypt_sdp_ioctl_set_sdp_policy(inode, arg);
-#else
-		return 0;
-#endif
 	case EXT4_IOC_SET_SENSITIVE:
 		return fscrypt_sdp_ioctl_set_sensitive(inode, arg);
 	case EXT4_IOC_SET_PROTECTED:

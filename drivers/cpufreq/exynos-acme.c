@@ -801,29 +801,10 @@ static void print_domain_info(struct exynos_cpufreq_domain *domain)
 	pr_info("CPUFREQ of domain%d table size = %d\n",
 			domain->id, domain->table_size);
 
-/*
-[    2.590509] exynos_acme: CPUFREQ of domain1 table size = 17
-[    2.590516] exynos_acme: CPUFREQ of domain1 : L 0       -1 kHz
-[    2.590522] exynos_acme: CPUFREQ of domain1 : L 1       -1 kHz
-[    2.590530] exynos_acme: CPUFREQ of domain1 : L 2  2288000 kHz
-[    2.590537] exynos_acme: CPUFREQ of domain1 : L 3  2184000 kHz
-[    2.590544] exynos_acme: CPUFREQ of domain1 : L 4  2080000 kHz
-[    2.590551] exynos_acme: CPUFREQ of domain1 : L 5  1976000 kHz
-[    2.590557] exynos_acme: CPUFREQ of domain1 : L 6  1872000 kHz
-[    2.590564] exynos_acme: CPUFREQ of domain1 : L 7  1768000 kHz
-[    2.590571] exynos_acme: CPUFREQ of domain1 : L 8  1664000 kHz
-[    2.590577] exynos_acme: CPUFREQ of domain1 : L 9  1560000 kHz
-[    2.590585] exynos_acme: CPUFREQ of domain1 : L10  1352000 kHz
-[    2.590591] exynos_acme: CPUFREQ of domain1 : L11  1144000 kHz
-[    2.590598] exynos_acme: CPUFREQ of domain1 : L12   936000 kHz
-[    2.590605] exynos_acme: CPUFREQ of domain1 : L13   728000 kHz
-[    2.590613] exynos_acme: CPUFREQ of domain1 : L14   520000 kHz
-[    2.590620] exynos_acme: CPUFREQ of domain1 : L15   312000 kHz
-[    2.590627] exynos_acme: CPUFREQ of domain1 : L16       -1 kHz
-*/
+
 	for (i = 0; i < domain->table_size; i ++) {
-		//if (domain->freq_table[i].frequency == CPUFREQ_ENTRY_INVALID)
-		//	continue;
+		if (domain->freq_table[i].frequency == CPUFREQ_ENTRY_INVALID)
+			continue;
 
 		pr_info("CPUFREQ of domain%d : L%2d  %7d kHz\n",
 			domain->id,
@@ -832,6 +813,10 @@ static void print_domain_info(struct exynos_cpufreq_domain *domain)
 	}
 }
 
+static __init void init_sysfs(void)
+{
+	return;
+}
 
 static __init int init_table(struct exynos_cpufreq_domain *domain)
 {
@@ -870,15 +855,18 @@ static __init int init_table(struct exynos_cpufreq_domain *domain)
 		else {
 			domain->freq_table[index].frequency = table[index];
 			/* Add OPP table to first cpu of domain */
-			
+			if(table[index]==1794)
+				volt_table[index]=1043750;
+			if(table[index]==1898)
+				volt_table[index]=1193750;
+			if(table[index]==2002)
+				volt_table[index]=1193750;
+			if(table[index]==2392)
+				volt_table[index]=1262500;
+			if(table[index]==2496)
+				volt_table[index]=1262500;
 			dev_pm_opp_add(get_cpu_device(cpumask_first(&domain->cpus)),
-					table[index] * 1000, volt_table[index]); //try drop litte volt of clock cpu
-			if(table[index] * 1000==2392000||table[index] * 1000==2496000||table[index] * 1000==1898000||table[index] * 1000==2002000)
-				{
-				volt_table[index]=1300000;
-				dev_pm_opp_add(get_cpu_device(cpumask_first(&domain->cpus)),
-					table[index] * 1000, volt_table[index]); //try to more volt of clock cpu
-				}
+					table[index] * 1000, volt_table[index]);
 		}
 
 		/* Initialize table of DVFS manager constraint */
@@ -889,28 +877,10 @@ static __init int init_table(struct exynos_cpufreq_domain *domain)
 		list_for_each_entry(ufc, &domain->ufc_list, list)
 			ufc->info.freq_table[index].master_freq =
 					domain->freq_table[index].frequency;
-		pr_info("init_table : %u MHz - volt_table  : %u Uv domain->cal_id : %u minhker98volt\n",
-					table[index],volt_table[index],domain->cal_id);
+		pr_info("init_table : %u MHz - volt_table  : %u Uv minhker98volt\n",
+					table[index],volt_table[index]);
 	}
-/*
-[    0.841771] exynos_acme: init_table : 2496000 MHz - volt_table : 1143750 Uv minhker98volt
-[    0.841781] exynos_acme: init_table : 2392000 MHz - volt_table : 1143750 Uv minhker98volt
-[    0.841795] exynos_acme: init_table : 2288000 MHz - volt_table : 1143750 Uv minhker98volt
-[    0.841805] exynos_acme: init_table : 2184000 MHz - volt_table : 1143750 Uv minhker98volt
-[    0.841814] exynos_acme: init_table : 2080000 MHz - volt_table : 1087500 Uv minhker98volt
-[    0.841825] exynos_acme: init_table : 1976000 MHz - volt_table : 1037500 Uv minhker98volt
-[    0.841834] exynos_acme: init_table : 1872000 MHz - volt_table : 987500 Uv minhker98volt
-[    0.841844] exynos_acme: init_table : 1768000 MHz - volt_table : 943750 Uv minhker98volt
-[    0.841851] exynos_acme: init_table : 1664000 MHz - volt_table : 918750 Uv minhker98volt
-[    0.841859] exynos_acme: init_table : 1560000 MHz - volt_table : 875000 Uv minhker98volt
-[    0.841868] exynos_acme: init_table : 1352000 MHz - volt_table : 806250 Uv minhker98volt
-[    0.841877] exynos_acme: init_table : 1144000 MHz - volt_table : 743750 Uv minhker98volt
-[    0.841885] exynos_acme: init_table : 936000 MHz - volt_table : 687500 Uv minhker98volt
-[    0.841893] exynos_acme: init_table : 728000 MHz - volt_table : 631250 Uv minhker98volt
-[    0.841901] exynos_acme: init_table : 520000 MHz - volt_table : 600000 Uv minhker98volt
-[    0.841911] exynos_acme: init_table : 312000 MHz - volt_table : 600000 Uv minhker98volt
-[    0.841919] exynos_acme: init_table : 208000 MHz - volt_table : 600000 Uv minhker98volt
-*/
+
 	domain->freq_table[index].driver_data = index;
 	domain->freq_table[index].frequency = CPUFREQ_TABLE_END;
 
@@ -1016,30 +986,23 @@ static int init_constraint_table_ect(struct exynos_cpufreq_domain *domain,
 			//for litte
 			if(domain->id==0)
 			{
-				if(freq==1352000&&ect_domain->level[c_index].sub_frequencies==267000)
-					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=333000;
 				if(freq==1248000&&ect_domain->level[c_index].sub_frequencies==107000)
-					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=267000;
-				if(freq==1144000&&ect_domain->level[c_index].sub_frequencies==107000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
 			}
 			if(domain->id==1)
 			{
 				if(freq==1768000)
-					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=533000;
-				if(freq==1560000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=333000;
-				if(freq==1352000)
+				if(freq==1560000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=267000;
-				if(freq==1144000)
+				if(freq==1352000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
+				//if(freq==1144000)
+				//	dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
 			}
 				valid_row = true;
 				break;
 			}
-			//pr_info("constraint_table_ect: Master_freq : %u kHz - ect_domain->level[c_index].sub_frequencies : %u kHz - minhker98\n",ect_domain->level[c_index].main_frequencies,ect_domain->level[c_index].sub_frequencies);
-			//1586000 kHz - constraint_freq : 533000 kHz
-			//1482000 kHz - cinwtraint_freq : 333000 kHz
 		}
 pr_info("constraint_table_ect: freq : %u kHz - dm->c.freq_table[index].constraint_freq : %u kHz - minhker98\n",freq,dm->c.freq_table[index].constraint_freq);
 		/*
@@ -1050,44 +1013,6 @@ pr_info("constraint_table_ect: freq : %u kHz - dm->c.freq_table[index].constrain
 		if (!valid_row)
 			dm->c.freq_table[index].constraint_freq
 				= ect_domain->level[0].sub_frequencies;//ect_domain->level[0].sub_frequencies is 533000
-/*
-[    2.589508] exynos_acme: constraint_table_ect: freq : 4294967295 kHz - dm->c.freq_table[index].constraint_freq : 0 kHz - minhker98
-[    2.589519] exynos_acme: constraint_table_ect: freq : 4294967295 kHz - dm->c.freq_table[index].constraint_freq : 0 kHz - minhker98
-[    2.589530] exynos_acme: constraint_table_ect: freq : 1794000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.589540] exynos_acme: constraint_table_ect: freq : 1690000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.589551] exynos_acme: constraint_table_ect: freq : 1586000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.589561] exynos_acme: constraint_table_ect: freq : 1482000 kHz - dm->c.freq_table[index].constraint_freq : 333000 kHz - minhker98
-[    2.589572] exynos_acme: constraint_table_ect: freq : 1352000 kHz - dm->c.freq_table[index].constraint_freq : 333000 kHz - minhker98
-[    2.589582] exynos_acme: constraint_table_ect: freq : 1248000 kHz - dm->c.freq_table[index].constraint_freq : 267000 kHz - minhker98
-[    2.589591] exynos_acme: constraint_table_ect: freq : 1144000 kHz - dm->c.freq_table[index].constraint_freq : 133000 kHz - minhker98
-[    2.589602] exynos_acme: constraint_table_ect: freq : 1014000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589609] exynos_acme: constraint_table_ect: freq : 902000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589617] exynos_acme: constraint_table_ect: freq : 839000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589624] exynos_acme: constraint_table_ect: freq : 757000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589632] exynos_acme: constraint_table_ect: freq : 676000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589639] exynos_acme: constraint_table_ect: freq : 546000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589646] exynos_acme: constraint_table_ect: freq : 449000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589654] exynos_acme: constraint_table_ect: freq : 343000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.589661] exynos_acme: constraint_table_ect: freq : 208000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-
-[    2.590179] exynos_acme: constraint_table_ect: freq : 4294967295 kHz - dm->c.freq_table[index].constraint_freq : 0 kHz - minhker98
-[    2.590188] exynos_acme: constraint_table_ect: freq : 4294967295 kHz - dm->c.freq_table[index].constraint_freq : 0 kHz - minhker98
-[    2.590196] exynos_acme: constraint_table_ect: freq : 2288000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.590206] exynos_acme: constraint_table_ect: freq : 2184000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.590214] exynos_acme: constraint_table_ect: freq : 2080000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.590223] exynos_acme: constraint_table_ect: freq : 1976000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.590234] exynos_acme: constraint_table_ect: freq : 1872000 kHz - dm->c.freq_table[index].constraint_freq : 533000 kHz - minhker98
-[    2.590243] exynos_acme: constraint_table_ect: freq : 1768000 kHz - dm->c.freq_table[index].constraint_freq : 333000 kHz - minhker98
-[    2.590251] exynos_acme: constraint_table_ect: freq : 1664000 kHz - dm->c.freq_table[index].constraint_freq : 333000 kHz - minhker98
-[    2.590258] exynos_acme: constraint_table_ect: freq : 1560000 kHz - dm->c.freq_table[index].constraint_freq : 267000 kHz - minhker98
-[    2.590266] exynos_acme: constraint_table_ect: freq : 1352000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.590274] exynos_acme: constraint_table_ect: freq : 1144000 kHz - dm->c.freq_table[index].constraint_freq : 133000 kHz - minhker98
-[    2.590281] exynos_acme: constraint_table_ect: freq : 936000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.590289] exynos_acme: constraint_table_ect: freq : 728000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.590297] exynos_acme: constraint_table_ect: freq : 520000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.590304] exynos_acme: constraint_table_ect: freq : 312000 kHz - dm->c.freq_table[index].constraint_freq : 107000 kHz - minhker98
-[    2.590312] exynos_acme: constraint_table_ect: freq : 4294967295 kHz - dm->c.freq_table[index].constraint_freq : 0 kHz - minhker98
-*/
 	}
 
 	return 0;
@@ -1121,78 +1046,56 @@ static int init_constraint_table_dt(struct exynos_cpufreq_domain *domain,
 			continue;
 		// for litte
 		if(freq==1794000||freq==1898000||freq==2002000)
-			dm->c.freq_table[index].constraint_freq=1014000;
+			dm->c.freq_table[index].constraint_freq=1014000;//stock is 1014000
 		// for big
-		if(freq==2496000||freq==2392000||freq==2288000)
+		if(freq==2496000||freq==2392000||freq==2288000||freq==2184000||freq==2080000||freq==1976000||freq==1872000)
 			dm->c.freq_table[index].constraint_freq=1794000;
-		if(freq==2184000||freq==2080000||freq==1976000||freq==1872000)
-			dm->c.freq_table[index].constraint_freq=1794000;
+		if(freq==520000)
+			dm->c.freq_table[index].constraint_freq=546000;
+		if(freq==312000||freq==208000)
+			dm->c.freq_table[index].constraint_freq=420000;
 		for (c_index = 0; c_index < size / 2; c_index++) {
+					
 			/* find row same or nearby frequency */
 			if (freq <= table[c_index].master_freq)
 				dm->c.freq_table[index].constraint_freq
 					= table[c_index].constraint_freq;//main is cpu freq, cons is mif
+			// for big
+			if(freq==1768000)
+			{
+				dm->c.freq_table[index].constraint_freq=1539000;
+			}
+			if(freq==1664000)
+			{
+				dm->c.freq_table[index].constraint_freq=1539000;
+			}
+			if(freq==1560000)
+			{
+				dm->c.freq_table[index].constraint_freq=1352000;
+			}
+			if(freq==1352000&&dm->c.freq_table[index].constraint_freq==1352000)
+			{
+				dm->c.freq_table[index].constraint_freq=1014000;
+			}
+			if(freq==1144000&&dm->c.freq_table[index].constraint_freq==1014000)
+			{
+				dm->c.freq_table[index].constraint_freq=845000;
+			}
+			if(freq==936000&&table[c_index].constraint_freq==1014000)
+			{
+				dm->c.freq_table[index].constraint_freq=676000;
+			}
+			if(freq==728000)
+			{
+				dm->c.freq_table[index].constraint_freq=546000;
+			}
 			if (freq >= table[c_index].master_freq)
 			{
 				break;
-				//if(freq==1794000)
-				//	table[c_index].constraint_freq=1014000;
-				//if(freq==2288000||freq==2184000||freq==2080000||freq==1976000||freq==1872000||freq==2288000)
-				//	table[c_index].constraint_freq=1794000;
-/* just max 1690 i dont knox
-[    0.942290] exynos_acme: constraint_table_dt: Master_freq : 1690000 kHz - constraint_freq : 1014000 kHz- minhker98dt
-[    0.942297] exynos_acme: constraint_table_dt: Master_freq : 1586000 kHz - constraint_freq : 1014000 kHz- minhker98dt
-[    0.942305] exynos_acme: constraint_table_dt: Master_freq : 1482000 kHz - constraint_freq : 1014000 kHz- minhker98dt
-[    0.942312] exynos_acme: constraint_table_dt: Master_freq : 1352000 kHz - constraint_freq : 845000 kHz- minhker98dt
-[    0.942319] exynos_acme: constraint_table_dt: Master_freq : 1248000 kHz - constraint_freq : 845000 kHz- minhker98dt
-[    0.942327] exynos_acme: constraint_table_dt: Master_freq : 1144000 kHz - constraint_freq : 845000 kHz- minhker98dt
-[    0.942334] exynos_acme: constraint_table_dt: Master_freq : 1014000 kHz - constraint_freq : 845000 kHz- minhker98dt
-[    0.942342] exynos_acme: constraint_table_dt: Master_freq : 902000 kHz - constraint_freq : 676000 kHz- minhker98dt
-[    0.942349] exynos_acme: constraint_table_dt: Master_freq : 839000 kHz - constraint_freq : 676000 kHz- minhker98dt
-[    0.942357] exynos_acme: constraint_table_dt: Master_freq : 757000 kHz - constraint_freq : 546000 kHz- minhker98dt
-[    0.942365] exynos_acme: constraint_table_dt: Master_freq : 676000 kHz - constraint_freq : 546000 kHz- minhker98dt
-[    0.942373] exynos_acme: constraint_table_dt: Master_freq : 546000 kHz - constraint_freq : 420000 kHz- minhker98dt
-[    0.942381] exynos_acme: constraint_table_dt: Master_freq : 449000 kHz - constraint_freq : 420000 kHz- minhker98dt
-[    0.942388] exynos_acme: constraint_table_dt: Master_freq : 343000 kHz - constraint_freq : 420000 kHz- minhker98dt
-[    0.942395] exynos_acme: constraint_table_dt: Master_freq : 208000 kHz - constraint_freq : 420000 kHz- minhker98dt
-*/
 			}
-			//pr_info("constraint_table_dt: Master_freq : %u kHz - constraint_freq : %u kHz- minhker98dt\n",table[c_index].master_freq,table[c_index].constraint_freq);// we done
 		}
 		pr_info("constraint_table_dt: freq : %u kHz - dm->c.freq_table[index].constraint_freq : %u kHz- minhker98dt\n",freq,dm->c.freq_table[index].constraint_freq);//hope
-/* max is 2002
-[    2.589677] exynos_acme: constraint_table_dt: freq : 1794000 kHz - dm->c.freq_table[index].constraint_freq : 1014000 kHz- minhker98dt
-[    2.589686] exynos_acme: constraint_table_dt: freq : 1690000 kHz - dm->c.freq_table[index].constraint_freq : 1014000 kHz- minhker98dt
-[    2.589695] exynos_acme: constraint_table_dt: freq : 1586000 kHz - dm->c.freq_table[index].constraint_freq : 1014000 kHz- minhker98dt
-[    2.589704] exynos_acme: constraint_table_dt: freq : 1482000 kHz - dm->c.freq_table[index].constraint_freq : 1014000 kHz- minhker98dt
-[    2.589713] exynos_acme: constraint_table_dt: freq : 1352000 kHz - dm->c.freq_table[index].constraint_freq : 845000 kHz- minhker98dt
-[    2.589722] exynos_acme: constraint_table_dt: freq : 1248000 kHz - dm->c.freq_table[index].constraint_freq : 845000 kHz- minhker98dt
-[    2.589731] exynos_acme: constraint_table_dt: freq : 1144000 kHz - dm->c.freq_table[index].constraint_freq : 845000 kHz- minhker98dt
-[    2.589741] exynos_acme: constraint_table_dt: freq : 1014000 kHz - dm->c.freq_table[index].constraint_freq : 845000 kHz- minhker98dt
-[    2.589752] exynos_acme: constraint_table_dt: freq : 902000 kHz - dm->c.freq_table[index].constraint_freq : 676000 kHz- minhker98dt
-[    2.589761] exynos_acme: constraint_table_dt: freq : 839000 kHz - dm->c.freq_table[index].constraint_freq : 676000 kHz- minhker98dt
-[    2.589771] exynos_acme: constraint_table_dt: freq : 757000 kHz - dm->c.freq_table[index].constraint_freq : 546000 kHz- minhker98dt
-[    2.589781] exynos_acme: constraint_table_dt: freq : 676000 kHz - dm->c.freq_table[index].constraint_freq : 546000 kHz- minhker98dt
-[    2.589788] exynos_acme: constraint_table_dt: freq : 546000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
-[    2.589795] exynos_acme: constraint_table_dt: freq : 449000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
-[    2.589804] exynos_acme: constraint_table_dt: freq : 343000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
-[    2.589811] exynos_acme: constraint_table_dt: freq : 208000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
 
-[    2.590324] exynos_acme: constraint_table_dt: freq : 2288000 kHz - dm->c.freq_table[index].constraint_freq : 1794000 kHz- minhker98dt
-[    2.590334] exynos_acme: constraint_table_dt: freq : 2184000 kHz - dm->c.freq_table[index].constraint_freq : 1794000 kHz- minhker98dt
-[    2.590342] exynos_acme: constraint_table_dt: freq : 2080000 kHz - dm->c.freq_table[index].constraint_freq : 1794000 kHz- minhker98dt
-[    2.590352] exynos_acme: constraint_table_dt: freq : 1976000 kHz - dm->c.freq_table[index].constraint_freq : 1794000 kHz- minhker98dt
-[    2.590361] exynos_acme: constraint_table_dt: freq : 1872000 kHz - dm->c.freq_table[index].constraint_freq : 1794000 kHz- minhker98dt
-[    2.590369] exynos_acme: constraint_table_dt: freq : 1768000 kHz - dm->c.freq_table[index].constraint_freq : 1794000 kHz- minhker98dt
-[    2.590378] exynos_acme: constraint_table_dt: freq : 1664000 kHz - dm->c.freq_table[index].constraint_freq : 1539000 kHz- minhker98dt
-[    2.590389] exynos_acme: constraint_table_dt: freq : 1560000 kHz - dm->c.freq_table[index].constraint_freq : 1539000 kHz- minhker98dt
-[    2.590399] exynos_acme: constraint_table_dt: freq : 1352000 kHz - dm->c.freq_table[index].constraint_freq : 1014000 kHz- minhker98dt
-[    2.590410] exynos_acme: constraint_table_dt: freq : 1144000 kHz - dm->c.freq_table[index].constraint_freq : 845000 kHz- minhker98dt
-[    2.590420] exynos_acme: constraint_table_dt: freq : 936000 kHz - dm->c.freq_table[index].constraint_freq : 546000 kHz- minhker98dt
-[    2.590431] exynos_acme: constraint_table_dt: freq : 728000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
-[    2.590442] exynos_acme: constraint_table_dt: freq : 520000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
-[    2.590452] exynos_acme: constraint_table_dt: freq : 312000 kHz - dm->c.freq_table[index].constraint_freq : 420000 kHz- minhker98dt
-*/
 	}
 
 	kfree(table);
@@ -1272,25 +1175,19 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	 */
 #ifndef CONFIG_EXYNOS_HOTPLUG_GOVERNOR
 	if (!of_property_read_u32(dn, "max-freq", &val))
-		domain->max_freq = min(domain->max_freq, val); 
+		domain->max_freq = min(domain->max_freq, val);
 #endif
 	if (!of_property_read_u32(dn, "min-freq", &val))
 		domain->min_freq = max(domain->min_freq, val);
 
-	
-
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
 	if (domain->id == 0) {
-		domain->max_freq = 1794000; //2002 1898 1794 1690...449 343 208
+		domain->boot_freq=domain->max_freq = 1690000; //2002 1898 1794 1690...449 343 208
 		domain->min_freq = 208000;//2002 1898 1794 1690...449 343 208
-		domain->boot_freq = 1352000;
-		domain->resume_freq = 1352000;
 	} else if (domain->id == 1) {
-		domain->max_freq = 2288000; //2496 2392 2288 2184....728 520 312 208
+		domain->boot_freq=domain->max_freq = 2184000; //2496 2392 2288 2184....728 520 312 208
 		domain->min_freq = 208000; //2496 2392 2288 2184....728 520 312 208
-		domain->boot_freq = 1664000;
-		domain->resume_freq = 1664000;
 	}
 
 	/* Initialize freq boost */
@@ -1532,6 +1429,7 @@ static int __init exynos_cpufreq_init(void)
 		return ret;
 	}
 
+	init_sysfs();
 
 	register_hotcpu_notifier(&exynos_cpufreq_cpu_up_notifier);
 	register_hotcpu_notifier(&exynos_cpufreq_cpu_down_notifier);

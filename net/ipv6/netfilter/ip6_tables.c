@@ -460,12 +460,23 @@ ip6t_do_table(struct sk_buff *skb,
 #endif
 }
 
+static bool find_jump_target(const struct xt_table_info *t,
+			     const struct ip6t_entry *target)
+{
+	struct ip6t_entry *iter;
+
+	xt_entry_foreach(iter, t->entries, t->size) {
+		 if (iter == target)
+			return true;
+	}
+	return false;
+}
+
 /* Figures out from what hook each rule can be called: returns 0 if
    there are loops.  Puts hook bitmask in comefrom. */
 static int
 mark_source_chains(const struct xt_table_info *newinfo,
-		   unsigned int valid_hooks, void *entry0,
-		   unsigned int *offsets)
+		   unsigned int valid_hooks, void *entry0)
 {
 	unsigned int hook;
 
@@ -558,11 +569,10 @@ mark_source_chains(const struct xt_table_info *newinfo,
 					/* This a jump; chase it. */
 					duprintf("Jump rule %u -> %u\n",
 						 pos, newpos);
-					if (!xt_find_jump_offset(offsets, newpos,
-								 newinfo->number))
-						return 0;
 					e = (struct ip6t_entry *)
 						(entry0 + newpos);
+					if (!find_jump_target(newinfo, e))
+						return 0;
 				} else {
 					/* ... this is a fallthru */
 					newpos = pos + e->next_offset;
@@ -663,8 +673,7 @@ static int check_target(struct ip6t_entry *e, struct net *net, const char *name)
 
 static int
 find_check_entry(struct ip6t_entry *e, struct net *net, const char *name,
-		 unsigned int size,
-		 struct xt_percpu_counter_alloc_state *alloc_state)
+		 unsigned int size)
 {
 	struct xt_entry_target *t;
 	struct xt_target *target;
@@ -673,11 +682,11 @@ find_check_entry(struct ip6t_entry *e, struct net *net, const char *name,
 	struct xt_mtchk_param mtpar;
 	struct xt_entry_match *ematch;
 
-	if (!xt_percpu_counter_alloc(alloc_state, &e->counters))
+	e->counters.pcnt = xt_percpu_counter_alloc();
+	if (IS_ERR_VALUE(e->counters.pcnt))
 		return -ENOMEM;
 
 	j = 0;
-	memset(&mtpar, 0, sizeof(mtpar));
 	mtpar.net	= net;
 	mtpar.table     = name;
 	mtpar.entryinfo = &e->ipv6;
@@ -713,7 +722,7 @@ find_check_entry(struct ip6t_entry *e, struct net *net, const char *name,
 		cleanup_match(ematch, net);
 	}
 
-	xt_percpu_counter_free(&e->counters);
+	xt_percpu_counter_free(e->counters.pcnt);
 
 	return ret;
 }
@@ -808,7 +817,8 @@ static void cleanup_entry(struct ip6t_entry *e, struct net *net)
 	if (par.target->destroy != NULL)
 		par.target->destroy(&par);
 	module_put(par.target->me);
-	xt_percpu_counter_free(&e->counters);
+
+	xt_percpu_counter_free(e->counters.pcnt);
 }
 
 /* Checks and translates the user-supplied table segment (held in
@@ -817,9 +827,7 @@ static int
 translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 		const struct ip6t_replace *repl)
 {
-	struct xt_percpu_counter_alloc_state alloc_state = { 0 };
 	struct ip6t_entry *iter;
-	unsigned int *offsets;
 	unsigned int i;
 	int ret = 0;
 
@@ -833,9 +841,6 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 	}
 
 	duprintf("translate_table: size %u\n", newinfo->size);
-	offsets = xt_alloc_entry_offsets(newinfo->number);
-	if (!offsets)
-		return -ENOMEM;
 	i = 0;
 
 	/* Walk through entries, checking offsets. */
@@ -845,10 +850,9 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 						 repl->hook_entry,
 						 repl->underflow,
 						 repl->valid_hooks);
-		if (ret != 0)
-			goto out_free;
-		if (i < repl->num_entries)
-			offsets[i] = (void *)iter - entry0;
+		if (ret != 0) {
+			return ret;
+		}
 		++i;
 		if (strcmp(ip6t_get_target(iter)->u.user.name,
 		    XT_ERROR_TARGET) == 0) {
@@ -856,11 +860,10 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 		}
 	}
 
-	ret = -EINVAL;
 	if (i != repl->num_entries) {
 		duprintf("translate_table: %u not %u entries\n",
 			 i, repl->num_entries);
-		goto out_free;
+		return -EINVAL;
 	}
 
 	/* Check hooks all assigned */
@@ -871,26 +874,22 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 		if (newinfo->hook_entry[i] == 0xFFFFFFFF) {
 			duprintf("Invalid hook entry %u %u\n",
 				 i, repl->hook_entry[i]);
-			goto out_free;
+			return -EINVAL;
 		}
 		if (newinfo->underflow[i] == 0xFFFFFFFF) {
 			duprintf("Invalid underflow %u %u\n",
 				 i, repl->underflow[i]);
-			goto out_free;
+			return -EINVAL;
 		}
 	}
 
-	if (!mark_source_chains(newinfo, repl->valid_hooks, entry0, offsets)) {
-		ret = -ELOOP;
-		goto out_free;
-	}
-	kvfree(offsets);
+	if (!mark_source_chains(newinfo, repl->valid_hooks, entry0))
+		return -ELOOP;
 
 	/* Finally, each sanity check must pass */
 	i = 0;
 	xt_entry_foreach(iter, entry0, newinfo->size) {
-		ret = find_check_entry(iter, net, repl->name, repl->size,
-				       &alloc_state);
+		ret = find_check_entry(iter, net, repl->name, repl->size);
 		if (ret != 0)
 			break;
 		++i;
@@ -905,9 +904,6 @@ translate_table(struct net *net, struct xt_table_info *newinfo, void *entry0,
 		return ret;
 	}
 
-	return ret;
- out_free:
-	kvfree(offsets);
 	return ret;
 }
 
@@ -1185,7 +1181,6 @@ get_entries(struct net *net, struct ip6t_get_entries __user *uptr,
 			 *len, sizeof(get) + get.size);
 		return -EINVAL;
 	}
-	get.name[sizeof(get.name) - 1] = '\0';
 
 	t = xt_find_table_lock(net, AF_INET6, get.name);
 	if (!IS_ERR_OR_NULL(t)) {
@@ -1805,7 +1800,6 @@ compat_get_entries(struct net *net, struct compat_ip6t_get_entries __user *uptr,
 			 *len, sizeof(get) + get.size);
 		return -EINVAL;
 	}
-	get.name[sizeof(get.name) - 1] = '\0';
 
 	xt_compat_lock(AF_INET6);
 	t = xt_find_table_lock(net, AF_INET6, get.name);
@@ -2079,7 +2073,6 @@ static struct xt_match ip6t_builtin_mt[] __read_mostly = {
 		.checkentry = icmp6_checkentry,
 		.proto      = IPPROTO_ICMPV6,
 		.family     = NFPROTO_IPV6,
-		.me	    = THIS_MODULE,
 	},
 };
 

@@ -14,21 +14,14 @@
  * GNU General Public License for more details.
  */
 
-#include "proca_log.h"
 #include "proca_certificate.h"
+#include "proca_certificate-asn1.h"
 
 #include <linux/slab.h>
 #include <linux/string.h>
 #include <linux/err.h>
 #include <crypto/hash.h>
 #include <crypto/sha.h>
-#include <linux/version.h>
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(4, 19, 42)
-#include "proca_certificate.asn1.h"
-#else
-#include "proca_certificate-asn1.h"
-#endif
 
 static struct crypto_shash *g_validation_shash;
 
@@ -83,7 +76,7 @@ int parse_proca_certificate(const char *certificate_buff,
 			      certificate_buff,
 			      buff_size);
 	if (!parsed_cert->app_name || !parsed_cert->five_signature_hash) {
-		PROCA_INFO_LOG("Failed to parse proca certificate.\n");
+		pr_info("Failed to parse proca certificate.\n");
 		deinit_proca_certificate(parsed_cert);
 		return -EINVAL;
 	}
@@ -101,7 +94,7 @@ int init_certificate_validation_hash(void)
 {
 	g_validation_shash = crypto_alloc_shash("sha256", 0, 0);
 	if (IS_ERR(g_validation_shash)) {
-		PROCA_WARN_LOG("can't alloc sha256 alg, rc - %ld.\n",
+		pr_warn("can't alloc sha256 alg, rc - %ld.\n",
 			PTR_ERR(g_validation_shash));
 		return PTR_ERR(g_validation_shash);
 	}
@@ -117,8 +110,7 @@ int compare_with_five_signature(const struct proca_certificate *certificate,
 	int rc = 0;
 
 	if (sizeof(five_sign_hash) != certificate->five_signature_hash_size) {
-		PROCA_DEBUG_LOG(
-			"Size of five sign hash is invalid %zu, expected %zu",
+		pr_debug("Size of five sign hash is invalid %zu, expected %zu",
 			 certificate->five_signature_hash_size,
 			 sizeof(five_sign_hash));
 		return rc;
@@ -129,14 +121,14 @@ int compare_with_five_signature(const struct proca_certificate *certificate,
 
 	rc = crypto_shash_init(sdesc);
 	if (rc != 0) {
-		PROCA_WARN_LOG("crypto_shash_init failed, rc - %d.\n", rc);
+		pr_warn("crypto_shash_init failed, rc - %d.\n", rc);
 		return 0;
 	}
 
 	rc = crypto_shash_digest(sdesc, five_signature,
 				 five_signature_size, five_sign_hash);
 	if (rc != 0) {
-		PROCA_WARN_LOG("crypto_shash_digest failed, rc - %d.\n", rc);
+		pr_warn("crypto_shash_digest failed, rc - %d.\n", rc);
 		return 0;
 	}
 

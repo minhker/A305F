@@ -11,7 +11,6 @@
  * GNU General Public License for more details.
  */
 
-#include <linux/atomic.h>
 #include <linux/cdev.h>
 #include <linux/device.h>
 #include <linux/fs.h>
@@ -42,7 +41,6 @@ struct task_reg_entry {
 	pid_t tgid;
 	unsigned int allow_any;
 	struct list_head shmem_list;
-	atomic_t ref_count;
 };
 
 struct shmem_reg_entry {
@@ -101,7 +99,6 @@ static struct task_reg_entry *tz_shmem_validator_alloc_task_reg_entry(void)
 
 	INIT_LIST_HEAD(&entry->link);
 	INIT_LIST_HEAD(&entry->shmem_list);
-	atomic_set(&entry->ref_count, 1);
 
 	return entry;
 }
@@ -131,7 +128,7 @@ static int tz_shmem_validator_register_task(void)
 
 	list_for_each_entry(entry, &tz_shmem_validator_task_reg_list, link) {
 		if (entry->tgid == tgid) {
-			atomic_inc(&entry->ref_count);
+			ret = -EEXIST;
 			goto out;
 		}
 	}
@@ -271,11 +268,9 @@ static int tz_shmem_validator_release(struct inode *inode, struct file *filp)
 	 * this task has registered. */
 	list_for_each_entry_safe(entry, tmp, &tz_shmem_validator_task_reg_list, link) {
 		if (entry->tgid == tgid) {
-			if (atomic_dec_and_test(&entry->ref_count)) {
-				__tz_shmem_validator_clean_task_data(entry);
-				list_del(&entry->link);
-				kfree(entry);
-			}
+			__tz_shmem_validator_clean_task_data(entry);
+			list_del(&entry->link);
+			kfree(entry);
 		}
 	}
 

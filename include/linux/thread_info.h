@@ -26,7 +26,11 @@
 
 #ifdef __KERNEL__
 
-#define THREADINFO_GFP		(GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO)
+#ifdef CONFIG_DEBUG_STACK_USAGE
+# define THREADINFO_GFP		(GFP_KERNEL | __GFP_NOTRACK | __GFP_ZERO)
+#else
+# define THREADINFO_GFP		(GFP_KERNEL | __GFP_NOTRACK)
+#endif
 
 /*
  * flag set/clear/test wrappers

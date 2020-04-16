@@ -424,16 +424,8 @@ u8 fimc_is_sec_compare_ver(int position)
 	if ((from_ver == def_ver) || (from_ver == def_ver2)) {
 		return finfo->cal_map_ver[3];
 	} else {
-		/*Check ASCII code for dumpstate */
-		if((finfo->cal_map_ver[0]>= '0') && (finfo->cal_map_ver[0]<= 'z') 
-			&& (finfo->cal_map_ver[1]>= '0') && (finfo->cal_map_ver[1]<= 'z')
-			&& (finfo->cal_map_ver[2]>= '0') && (finfo->cal_map_ver[2]<= 'z') 
-			&& (finfo->cal_map_ver[3]>= '0') && (finfo->cal_map_ver[3]<= 'z')) {
-			err("FROM core version is invalid. version is %c%c%c%c",
-					finfo->cal_map_ver[0], finfo->cal_map_ver[1], finfo->cal_map_ver[2], finfo->cal_map_ver[3]);
-		} else {
-			err("FROM core version is invalid. version is out of bounds");
-		}
+		err("FROM core version is invalid. version is %c%c%c%c",
+			finfo->cal_map_ver[0], finfo->cal_map_ver[1], finfo->cal_map_ver[2], finfo->cal_map_ver[3]);
 		return 0;
 	}
 

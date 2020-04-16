@@ -589,7 +589,7 @@ cifs_relock_file(struct cifsFileInfo *cfile)
 	struct cifs_tcon *tcon = tlink_tcon(cfile->tlink);
 	int rc = 0;
 
-	down_read_nested(&cinode->lock_sem, SINGLE_DEPTH_NESTING);
+	down_read(&cinode->lock_sem);
 	if (cinode->can_cache_brlcks) {
 		/* can cache locks - no need to relock */
 		up_read(&cinode->lock_sem);
@@ -1073,18 +1073,14 @@ cifs_push_mandatory_locks(struct cifsFileInfo *cfile)
 
 	/*
 	 * Accessing maxBuf is racy with cifs_reconnect - need to store value
-	 * and check it before using.
+	 * and check it for zero before using.
 	 */
 	max_buf = tcon->ses->server->maxBuf;
-	if (max_buf < (sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE))) {
+	if (!max_buf) {
 		free_xid(xid);
 		return -EINVAL;
 	}
 
-	BUILD_BUG_ON(sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE) >
-		     PAGE_SIZE);
-	max_buf = min_t(unsigned int, max_buf - sizeof(struct smb_hdr),
-			PAGE_SIZE);
 	max_num = (max_buf - sizeof(struct smb_hdr)) /
 						sizeof(LOCKING_ANDX_RANGE);
 	buf = kcalloc(max_num, sizeof(LOCKING_ANDX_RANGE), GFP_KERNEL);
@@ -1408,16 +1404,12 @@ cifs_unlock_range(struct cifsFileInfo *cfile, struct file_lock *flock,
 
 	/*
 	 * Accessing maxBuf is racy with cifs_reconnect - need to store value
-	 * and check it before using.
+	 * and check it for zero before using.
 	 */
 	max_buf = tcon->ses->server->maxBuf;
-	if (max_buf < (sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE)))
+	if (!max_buf)
 		return -EINVAL;
 
-	BUILD_BUG_ON(sizeof(struct smb_hdr) + sizeof(LOCKING_ANDX_RANGE) >
-		     PAGE_SIZE);
-	max_buf = min_t(unsigned int, max_buf - sizeof(struct smb_hdr),
-			PAGE_SIZE);
 	max_num = (max_buf - sizeof(struct smb_hdr)) /
 						sizeof(LOCKING_ANDX_RANGE);
 	buf = kcalloc(max_num, sizeof(LOCKING_ANDX_RANGE), GFP_KERNEL);
@@ -2753,16 +2745,14 @@ cifs_strict_writev(struct kiocb *iocb, struct iov_iter *from)
 	 * these pages but not on the region from pos to ppos+len-1.
 	 */
 	written = cifs_user_writev(iocb, from);
-	if (CIFS_CACHE_READ(cinode)) {
+	if (written > 0 && CIFS_CACHE_READ(cinode)) {
 		/*
-		 * We have read level caching and we have just sent a write
-		 * request to the server thus making data in the cache stale.
-		 * Zap the cache and set oplock/lease level to NONE to avoid
-		 * reading stale data from the cache. All subsequent read
-		 * operations will read new data from the server.
+		 * Windows 7 server can delay breaking level2 oplock if a write
+		 * request comes - break it on the client to prevent reading
+		 * an old data.
 		 */
 		cifs_zap_mapping(inode);
-		cifs_dbg(FYI, "Set Oplock/Lease to NONE for inode=%p after write\n",
+		cifs_dbg(FYI, "Set no oplock for inode=%p after a write operation\n",
 			 inode);
 		cinode->oplock = 0;
 	}
@@ -3251,18 +3241,20 @@ static const struct vm_operations_struct cifs_file_vm_ops = {
 
 int cifs_file_strict_mmap(struct file *file, struct vm_area_struct *vma)
 {
-	int xid, rc = 0;
+	int rc, xid;
 	struct inode *inode = file_inode(file);
 
 	xid = get_xid();
 
-	if (!CIFS_CACHE_READ(CIFS_I(inode)))
+	if (!CIFS_CACHE_READ(CIFS_I(inode))) {
 		rc = cifs_zap_mapping(inode);
-	if (!rc)
-		rc = generic_file_mmap(file, vma);
-	if (!rc)
-		vma->vm_ops = &cifs_file_vm_ops;
+		if (rc)
+			return rc;
+	}
 
+	rc = generic_file_mmap(file, vma);
+	if (rc == 0)
+		vma->vm_ops = &cifs_file_vm_ops;
 	free_xid(xid);
 	return rc;
 }
@@ -3272,16 +3264,16 @@ int cifs_file_mmap(struct file *file, struct vm_area_struct *vma)
 	int rc, xid;
 
 	xid = get_xid();
-
 	rc = cifs_revalidate_file(file);
-	if (rc)
+	if (rc) {
 		cifs_dbg(FYI, "Validation prior to mmap failed, error=%d\n",
 			 rc);
-	if (!rc)
-		rc = generic_file_mmap(file, vma);
-	if (!rc)
+		free_xid(xid);
+		return rc;
+	}
+	rc = generic_file_mmap(file, vma);
+	if (rc == 0)
 		vma->vm_ops = &cifs_file_vm_ops;
-
 	free_xid(xid);
 	return rc;
 }

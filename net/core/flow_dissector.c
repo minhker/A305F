@@ -480,8 +480,8 @@ ip_proto_again:
 		break;
 	}
 
-	if (dissector_uses_key(flow_dissector, FLOW_DISSECTOR_KEY_PORTS) &&
-	    !(key_control->flags & FLOW_DIS_IS_FRAGMENT)) {
+	if (dissector_uses_key(flow_dissector,
+			       FLOW_DISSECTOR_KEY_PORTS)) {
 		key_ports = skb_flow_dissector_target(flow_dissector,
 						      FLOW_DISSECTOR_KEY_PORTS,
 						      target_container);
@@ -492,8 +492,8 @@ ip_proto_again:
 out_good:
 	ret = true;
 
+	key_control->thoff = (u16)nhoff;
 out:
-	key_control->thoff = min_t(u16, nhoff, skb ? skb->len : hlen);
 	key_basic->n_proto = proto;
 	key_basic->ip_proto = ip_proto;
 
@@ -501,6 +501,7 @@ out:
 
 out_bad:
 	ret = false;
+	key_control->thoff = min_t(u16, nhoff, skb ? skb->len : hlen);
 	goto out;
 }
 EXPORT_SYMBOL(__skb_flow_dissect);

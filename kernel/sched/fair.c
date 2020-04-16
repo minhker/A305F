@@ -2238,8 +2238,7 @@ void task_numa_work(struct callback_head *work)
 		return;
 
 
-	if (!down_read_trylock(&mm->mmap_sem))
-		return;
+	down_read(&mm->mmap_sem);
 	vma = find_vma(mm, start);
 	if (!vma) {
 		reset_ptenuma_scan(p);
@@ -4153,13 +4152,9 @@ static void throttle_cfs_rq(struct cfs_rq *cfs_rq)
 
 	/*
 	 * Add to the _head_ of the list, so that an already-started
-	 * distribute_cfs_runtime will not see us. If disribute_cfs_runtime is
-	 * not running add to the tail so that later runqueues don't get starved.
+	 * distribute_cfs_runtime will not see us
 	 */
-	if (cfs_b->distribute_running)
-		list_add_rcu(&cfs_rq->throttled_list, &cfs_b->throttled_cfs_rq);
-	else
-		list_add_tail_rcu(&cfs_rq->throttled_list, &cfs_b->throttled_cfs_rq);
+	list_add_rcu(&cfs_rq->throttled_list, &cfs_b->throttled_cfs_rq);
 
 	/*
 	 * If we're the first throttled task, make sure the bandwidth
@@ -4302,16 +4297,14 @@ static int do_sched_cfs_period_timer(struct cfs_bandwidth *cfs_b, int overrun)
 	 * in us over-using our runtime if it is all used during this loop, but
 	 * only by limited amounts in that extreme case.
 	 */
-	while (throttled && cfs_b->runtime > 0 && !cfs_b->distribute_running) {
+	while (throttled && cfs_b->runtime > 0) {
 		runtime = cfs_b->runtime;
-		cfs_b->distribute_running = 1;
 		raw_spin_unlock(&cfs_b->lock);
 		/* we can't nest cfs_b->lock while distributing bandwidth */
 		runtime = distribute_cfs_runtime(cfs_b, runtime,
 						 runtime_expires);
 		raw_spin_lock(&cfs_b->lock);
 
-		cfs_b->distribute_running = 0;
 		throttled = !list_empty(&cfs_b->throttled_cfs_rq);
 
 		cfs_b->runtime -= min(runtime, cfs_b->runtime);
@@ -4422,11 +4415,6 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
 
 	/* confirm we're still not at a refresh boundary */
 	raw_spin_lock(&cfs_b->lock);
-	if (cfs_b->distribute_running) {
-		raw_spin_unlock(&cfs_b->lock);
-		return;
-	}
-
 	if (runtime_refresh_within(cfs_b, min_bandwidth_expiration)) {
 		raw_spin_unlock(&cfs_b->lock);
 		return;
@@ -4436,9 +4424,6 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
 		runtime = cfs_b->runtime;
 
 	expires = cfs_b->runtime_expires;
-	if (runtime)
-		cfs_b->distribute_running = 1;
-
 	raw_spin_unlock(&cfs_b->lock);
 
 	if (!runtime)
@@ -4449,7 +4434,6 @@ static void do_sched_cfs_slack_timer(struct cfs_bandwidth *cfs_b)
 	raw_spin_lock(&cfs_b->lock);
 	if (expires == cfs_b->runtime_expires)
 		cfs_b->runtime -= min(runtime, cfs_b->runtime);
-	cfs_b->distribute_running = 0;
 	raw_spin_unlock(&cfs_b->lock);
 }
 
@@ -4541,7 +4525,6 @@ void init_cfs_bandwidth(struct cfs_bandwidth *cfs_b)
 	cfs_b->period_timer.function = sched_cfs_period_timer;
 	hrtimer_init(&cfs_b->slack_timer, CLOCK_MONOTONIC, HRTIMER_MODE_REL);
 	cfs_b->slack_timer.function = sched_cfs_slack_timer;
-	cfs_b->distribute_running = 0;
 }
 
 static void init_cfs_rq_runtime(struct cfs_rq *cfs_rq)
@@ -5937,12 +5920,12 @@ static u64 hmp_rq_variable_scale_convert(u64 delta)
 {
 	u64 high = delta >> 32ULL;
 	u64 low = delta & 0xffffffffULL;
-
+	
 	low *= hmp_data.rq_multiplier;
 	high *= hmp_data.rq_multiplier;
-
+	
 	return (low >> HMP_VARIABLE_SCALE_SHIFT)
-			+ (high << (32ULL - HMP_VARIABLE_SCALE_SHIFT));
+			 + (high << (32ULL - HMP_VARIABLE_SCALE_SHIFT));
 }
 
 static ssize_t hmp_show(struct kobject *kobj,
@@ -7018,6 +7001,9 @@ select_task_rq_fair(struct task_struct *p, int prev_cpu, int sd_flag, int wake_f
 			}
 
 			return new_cpu;		
+		} else {
+			pr_info("selective doesn't choose a cpu for task:%p(%s, %d), new_cpu:%d\n"
+				,p, p->comm, cpuset_task_is_boosted(p), new_cpu);
 		}
 	}
 #endif
@@ -9994,15 +9980,11 @@ static int hmp_selective_migration(int prev_cpu, struct sched_entity *se)
 	 * waiting time
 	 */
 	if (is_boosted_task) {
-		if (p->prio <= 110 && cpuset_task_is_pinned(p)) {
-			min_load = hmp_domain_min_load(&firstboost,&min_cpu, tsk_cpus_allowed(p));
-		} else {
-			min_load = hmp_domain_min_load(&firstboost,&min_cpu, tsk_cpus_allowed(p));
-			if(min_load) {
-				min_load = hmp_domain_min_load(&secondboost,&min_cpu, tsk_cpus_allowed(p));
-				if(min_load)
-					min_load = hmp_domain_min_load(&logical_nonboost,&min_cpu, tsk_cpus_allowed(p));
-			}
+		min_load = hmp_domain_min_load(&firstboost,&min_cpu, tsk_cpus_allowed(p));
+		if(min_load) {
+			min_load = hmp_domain_min_load(&secondboost,&min_cpu, tsk_cpus_allowed(p));
+			if(min_load)
+				min_load = hmp_domain_min_load(&logical_nonboost,&min_cpu, tsk_cpus_allowed(p));
 		}
 	} else {
 		min_load = hmp_domain_min_load(&logical_nonboost,&min_cpu, tsk_cpus_allowed(p));
@@ -11003,29 +10985,21 @@ err:
 	return 0;
 }
 
-void unregister_fair_sched_group(struct task_group *tg)
+void unregister_fair_sched_group(struct task_group *tg, int cpu)
 {
+	struct rq *rq = cpu_rq(cpu);
 	unsigned long flags;
-	struct rq *rq;
-	int cpu;
 
-	for_each_possible_cpu(cpu) {
-		if (tg->se[cpu])
-			remove_entity_load_avg(tg->se[cpu]);
+	/*
+	* Only empty task groups can be destroyed; so we can speculatively
+	* check on_list without danger of it being re-added.
+	*/
+	if (!tg->cfs_rq[cpu]->on_list)
+		return;
 
-		/*
-		 * Only empty task groups can be destroyed; so we can speculatively
-		 * check on_list without danger of it being re-added.
-		 */
-		if (!tg->cfs_rq[cpu]->on_list)
-			continue;
-
-		rq = cpu_rq(cpu);
-
-		raw_spin_lock_irqsave(&rq->lock, flags);
-		list_del_leaf_cfs_rq(tg->cfs_rq[cpu]);
-		raw_spin_unlock_irqrestore(&rq->lock, flags);
-	}
+	raw_spin_lock_irqsave(&rq->lock, flags);
+	list_del_leaf_cfs_rq(tg->cfs_rq[cpu]);
+	raw_spin_unlock_irqrestore(&rq->lock, flags);
 }
 
 void init_tg_cfs_entry(struct task_group *tg, struct cfs_rq *cfs_rq,

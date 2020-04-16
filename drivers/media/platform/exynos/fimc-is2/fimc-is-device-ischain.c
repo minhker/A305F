@@ -2041,7 +2041,7 @@ int fimc_is_itf_grp_shot(struct fimc_is_device_ischain *device,
 
 #ifdef ENABLE_REMOSAIC_CAPTURE_WITH_ROTATION
 	if (!test_bit(FIMC_IS_ISCHAIN_REPROCESSING, &device->state)
-		&& CHK_REMOSAIC_SCN(frame->shot->ctl.aa.captureIntent))
+		&& CHK_REMOSAIC_SCN(frame->shot->ctl.aa.sceneMode))
 		is_remosaic_preview = true;
 #endif
 
@@ -4203,15 +4203,9 @@ static int fimc_is_ischain_3aa_stop(void *qdevice,
 	groupmgr = device->groupmgr;
 	group = &device->group_3aa;
 
-	if (!test_bit(FIMC_IS_GROUP_INIT, &group->state))
-		goto p_err;
-
 	ret = fimc_is_group_stop(groupmgr, group);
 	if (ret) {
-		if (ret == -EPERM)
-			ret = 0;
-		else
-			merr("fimc_is_group_stop is fail(%d)", device, ret);
+		merr("fimc_is_group_stop is fail(%d)", device, ret);
 		goto p_err;
 	}
 
@@ -4494,15 +4488,9 @@ static int fimc_is_ischain_isp_stop(void *qdevice,
 	groupmgr = device->groupmgr;
 	group = &device->group_isp;
 
-	if (!test_bit(FIMC_IS_GROUP_INIT, &group->state))
-		goto p_err;
-
 	ret = fimc_is_group_stop(groupmgr, group);
 	if (ret) {
-		if (ret == -EPERM)
-			ret = 0;
-		else
-			merr("fimc_is_group_stop is fail(%d)", device, ret);
+		merr("fimc_is_group_stop is fail(%d)", device, ret);
 		goto p_err;
 	}
 
@@ -4788,15 +4776,9 @@ static int fimc_is_ischain_dis_stop(void *qdevice,
 	groupmgr = device->groupmgr;
 	group = &device->group_dis;
 
-	if (!test_bit(FIMC_IS_GROUP_INIT, &group->state))
-		goto p_err;
-
 	ret = fimc_is_group_stop(groupmgr, group);
 	if (ret) {
-		if (ret == -EPERM)
-			ret = 0;
-		else
-			merr("fimc_is_group_stop is fail(%d)", device, ret);
+		merr("fimc_is_group_stop is fail(%d)", device, ret);
 		goto p_err;
 	}
 
@@ -5083,15 +5065,9 @@ static int fimc_is_ischain_mcs_stop(void *qdevice,
 	groupmgr = device->groupmgr;
 	group = &device->group_mcs;
 
-	if (!test_bit(FIMC_IS_GROUP_INIT, &group->state))
-		goto p_err;
-
 	ret = fimc_is_group_stop(groupmgr, group);
 	if (ret) {
-		if (ret == -EPERM)
-			ret = 0;
-		else
-			merr("fimc_is_group_stop is fail(%d)", device, ret);
+		merr("fimc_is_group_stop is fail(%d)", device, ret);
 		goto p_err;
 	}
 
@@ -5370,15 +5346,9 @@ static int fimc_is_ischain_vra_stop(void *qdevice,
 	groupmgr = device->groupmgr;
 	group = &device->group_vra;
 
-	if (!test_bit(FIMC_IS_GROUP_INIT, &group->state))
-		goto p_err;
-
 	ret = fimc_is_group_stop(groupmgr, group);
 	if (ret) {
-		if (ret == -EPERM)
-			ret = 0;
-		else
-			merr("fimc_is_group_stop is fail(%d)", device, ret);
+		merr("fimc_is_group_stop is fail(%d)", device, ret);
 		goto p_err;
 	}
 
@@ -6252,8 +6222,7 @@ p_err:
 #ifdef SENSOR_REQUEST_DELAY
 		if (test_bit(FIMC_IS_GROUP_OTF_INPUT, &group->state) &&
 			(frame->shot->uctl.opMode == CAMERA_OP_MODE_HAL3_GED
-			|| frame->shot->uctl.opMode == CAMERA_OP_MODE_HAL3_SDK
-			|| frame->shot->uctl.opMode == CAMERA_OP_MODE_HAL3_CAMERAX)) {
+			|| frame->shot->uctl.opMode == CAMERA_OP_MODE_HAL3_SDK)) {
 			if (framemgr->queued_count[FS_REQUEST] < SENSOR_REQUEST_DELAY)
 				mgrwarn(" late sensor control shot", device, group, frame);
 		}

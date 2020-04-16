@@ -130,7 +130,7 @@ static struct sec_therm_platform_data *
 sec_therm_parse_dt(struct platform_device *pdev) { return NULL; }
 #endif
 
-static int sec_therm_get_adc_data(struct sec_therm_info *info, int* adc_raw)
+static int sec_therm_get_adc_data(struct sec_therm_info *info)
 {
 	int adc_data;
 	int adc_max = 0, adc_min = 0, adc_total = 0;
@@ -143,9 +143,6 @@ static int sec_therm_get_adc_data(struct sec_therm_info *info, int* adc_raw)
 				__func__, adc_data);
 			return ret;
 		}
-
-		if (adc_raw != NULL)
-			adc_raw[i] = adc_data;
 
 		if (i != 0) {
 			if (adc_data > adc_max)
@@ -205,33 +202,26 @@ static int convert_adc_to_temper(struct sec_therm_info *info, unsigned int adc)
 	return temp;
 }
 
-#define ABS(x)		((x) < 0 ? (-1 * (x)) : (x))
-
 static ssize_t sec_therm_show_temperature(struct device *dev,
 				   struct device_attribute *attr,
 				   char *buf)
 {
 	struct sec_therm_info *info = dev_get_drvdata(dev);
 	int adc, temp;
-	static int prev_temp = 0, prev_adc = (-1);
-	int adc_raw[ADC_SAMPLING_CNT], i, ret = 0;
-	char str[ADC_SAMPLING_CNT * 10];
+	static int prev_temp = 9990, prev_adc = 0;
 
-	adc = sec_therm_get_adc_data(info, adc_raw);
+	adc = sec_therm_get_adc_data(info);
 
 	if (adc < 0)
 		return adc;
 	else
 		temp = convert_adc_to_temper(info, adc);
 
-	if (prev_adc != (-1)) {
-		if (temp >= 600 && ABS(prev_temp - temp) > 50) {
+	if (prev_temp != 9990) {
+		if ((prev_temp > temp && (prev_temp - temp) > 500) ||
+			(prev_temp < temp && (temp - prev_temp) > 500)) {
 			pr_info("%s: adc %d -> %d, temp %d -> %d\n",
 				__func__, prev_adc, adc, prev_temp, temp);
-			for (i = 0; i < ADC_SAMPLING_CNT; i++) {
-				ret += sprintf(str + ret, "%d ", adc_raw[i]);
-			}
-			pr_info("%s: adc raw data %s\n", __func__, str);
 		}
 	}
 	prev_temp = temp;
@@ -247,7 +237,7 @@ static ssize_t sec_therm_show_temp_adc(struct device *dev,
 	struct sec_therm_info *info = dev_get_drvdata(dev);
 	int adc;
 
-	adc = sec_therm_get_adc_data(info, NULL);
+	adc = sec_therm_get_adc_data(info);
 
 	return sprintf(buf, "%d\n", adc);
 }
@@ -285,7 +275,7 @@ int sec_therm_get_ap_temperature(void)
 	if (unlikely(!g_ap_therm_info))
 		return -ENODEV;
 
-	adc = sec_therm_get_adc_data(g_ap_therm_info, NULL);
+	adc = sec_therm_get_adc_data(g_ap_therm_info);
 
 	if (adc < 0)
 		return adc;

@@ -89,7 +89,6 @@
 #include <linux/magic.h>
 #include <linux/slab.h>
 #include <linux/xattr.h>
-#include <linux/nospec.h>
 
 #include <asm/uaccess.h>
 #include <asm/unistd.h>
@@ -470,15 +469,27 @@ static struct socket *sockfd_lookup_light(int fd, int *err, int *fput_needed)
 static ssize_t sockfs_getxattr(struct dentry *dentry,
 			       const char *name, void *value, size_t size)
 {
-	if (!strcmp(name, XATTR_NAME_SOCKPROTONAME)) {
+	const char *proto_name;
+	size_t proto_size;
+	int error;
+
+	error = -ENODATA;
+	if (!strncmp(name, XATTR_NAME_SOCKPROTONAME, XATTR_NAME_SOCKPROTONAME_LEN)) {
+		proto_name = dentry->d_name.name;
+		proto_size = strlen(proto_name);
+
 		if (value) {
-			if (dentry->d_name.len + 1 > size)
-				return -ERANGE;
-			memcpy(value, dentry->d_name.name, dentry->d_name.len + 1);
+			error = -ERANGE;
+			if (proto_size + 1 > size)
+				goto out;
+
+			strncpy(value, proto_name, proto_size + 1);
 		}
-		return dentry->d_name.len + 1;
+		error = proto_size + 1;
 	}
-	return -EOPNOTSUPP;
+
+out:
+	return error;
 }
 
 static ssize_t sockfs_listxattr(struct dentry *dentry, char *buffer,
@@ -516,10 +527,7 @@ static int sockfs_setattr(struct dentry *dentry, struct iattr *iattr)
 	if (!err && (iattr->ia_valid & ATTR_UID)) {
 		struct socket *sock = SOCKET_I(d_inode(dentry));
 
-		if (sock->sk)
-			sock->sk->sk_uid = iattr->ia_uid;
-		else
-			err = -ENOENT;
+		sock->sk->sk_uid = iattr->ia_uid;
 	}
 
 	return err;
@@ -570,16 +578,12 @@ static struct socket *sock_alloc(void)
  *	an inode not a file.
  */
 
-static void __sock_release(struct socket *sock, struct inode *inode)
+void sock_release(struct socket *sock)
 {
 	if (sock->ops) {
 		struct module *owner = sock->ops->owner;
 
-		if (inode)
-			inode_lock(inode);
 		sock->ops->release(sock);
-		if (inode)
-			inode_unlock(inode);
 		sock->ops = NULL;
 		module_put(owner);
 	}
@@ -593,11 +597,6 @@ static void __sock_release(struct socket *sock, struct inode *inode)
 		return;
 	}
 	sock->file = NULL;
-}
-
-void sock_release(struct socket *sock)
-{
-	__sock_release(sock, NULL);
 }
 EXPORT_SYMBOL(sock_release);
 
@@ -1035,7 +1034,7 @@ static int sock_mmap(struct file *file, struct vm_area_struct *vma)
 
 static int sock_close(struct inode *inode, struct file *filp)
 {
-	__sock_release(SOCKET_I(inode), inode);
+	sock_release(SOCKET_I(inode));
 	return 0;
 }
 
@@ -2339,7 +2338,6 @@ SYSCALL_DEFINE2(socketcall, int, call, unsigned long __user *, args)
 
 	if (call < 1 || call > SYS_SENDMMSG)
 		return -EINVAL;
-	call = array_index_nospec(call, SYS_SENDMMSG + 1);
 
 	len = nargs[call];
 	if (len > sizeof(a))
@@ -2549,15 +2547,6 @@ out_fs:
 }
 
 core_initcall(sock_init);	/* early initcall */
-
-static int __init jit_init(void)
-{
-#ifdef CONFIG_BPF_JIT_ALWAYS_ON
-	bpf_jit_enable = 1;
-#endif
-	return 0;
-}
-pure_initcall(jit_init);
 
 #ifdef CONFIG_PROC_FS
 void socket_seq_show(struct seq_file *seq)
@@ -2774,14 +2763,9 @@ static int ethtool_ioctl(struct net *net, struct compat_ifreq __user *ifr32)
 		    copy_in_user(&rxnfc->fs.ring_cookie,
 				 &compat_rxnfc->fs.ring_cookie,
 				 (void __user *)(&rxnfc->fs.location + 1) -
-				 (void __user *)&rxnfc->fs.ring_cookie))
-			return -EFAULT;
-		if (ethcmd == ETHTOOL_GRXCLSRLALL) {
-			if (put_user(rule_cnt, &rxnfc->rule_cnt))
-				return -EFAULT;
-		} else if (copy_in_user(&rxnfc->rule_cnt,
-					&compat_rxnfc->rule_cnt,
-					sizeof(rxnfc->rule_cnt)))
+				 (void __user *)&rxnfc->fs.ring_cookie) ||
+		    copy_in_user(&rxnfc->rule_cnt, &compat_rxnfc->rule_cnt,
+				 sizeof(rxnfc->rule_cnt)))
 			return -EFAULT;
 	}
 

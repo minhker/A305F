@@ -186,7 +186,6 @@ static int dek_release_req(struct inode *ignored, struct file *file)
 	return 0;
 }
 
-#ifdef CONFIG_SDP_ENHANCED
 #if DEK_DEBUG
 void hex_key_dump(const char* tag, uint8_t *data, size_t data_len)
 {
@@ -215,7 +214,6 @@ void hex_key_dump(const char* tag, uint8_t *data, size_t data_len)
 		"[%s] %s(len=%d) : %s\n", "DEK_DBG", tag, data_len, buf);
 	kfree(buf);
 }
-#endif
 #endif
 
 #ifdef CONFIG_SDP_KEY_DUMP
@@ -283,7 +281,6 @@ int dek_generate_dek(int engine_id, dek_t *newDek) {
 	return 0;
 }
 
-#ifdef CONFIG_SDP_ENHANCED
 int dek_encrypt_dek_ecdh(dek_t *plainDek, dek_t *encDek, kek_t *drv_key)
 {
 	int res;
@@ -342,7 +339,6 @@ clean:
 
 	return res;
 }
-#endif
 
 static int dek_encrypt_dek(int engine_id, dek_t *plainDek, dek_t *encDek) {
 	int ret = 0;
@@ -357,7 +353,6 @@ static int dek_encrypt_dek(int engine_id, dek_t *plainDek, dek_t *encDek) {
 
 	kek = get_kek(engine_id, KEK_TYPE_SYM, &ret);
 	if (kek) {
-#ifdef CONFIG_SDP_ENHANCED
 		ret = dek_aes_encrypt_key(kek, plainDek->buf, plainDek->len, encDek->buf, &encDek->len);
 		if (ret) {
 			DEK_LOGE("aes encrypt failed\n");
@@ -365,16 +360,6 @@ static int dek_encrypt_dek(int engine_id, dek_t *plainDek, dek_t *encDek) {
 		} else {
 			encDek->type = DEK_TYPE_AES_ENC;
 		}
-#else
-		if (dek_aes_encrypt(kek, plainDek->buf, encDek->buf, plainDek->len)) {
-			DEK_LOGE("aes encrypt failed\n");
-			dek_add_to_log(engine_id, "aes encrypt failed");
-			encDek->len = 0;
-		} else {
-			encDek->len = plainDek->len;
-			encDek->type = DEK_TYPE_AES_ENC;
-		}
-#endif
 		put_kek(kek);
 	} else {
 #ifdef CONFIG_PUB_CRYPTO
@@ -385,11 +370,7 @@ static int dek_encrypt_dek(int engine_id, dek_t *plainDek, dek_t *encDek) {
         case SDPK_ALGOTYPE_ASYMM_ECDH:
             kek = get_kek(engine_id, KEK_TYPE_ECDH256_PUB, &ret);
             if(kek) {
-#ifdef CONFIG_SDP_ENHANCED
                 ret = dek_encrypt_dek_ecdh(plainDek, encDek, kek);
-#else
-                ret = ecdh_encryptDEK(plainDek, encDek, kek);
-#endif
                 put_kek(kek);
                 break;
             }else{
@@ -463,7 +444,6 @@ int dek_encrypt_dek_efs(int engine_id, dek_t *plainDek, dek_t *encDek) {
 	return dek_encrypt_dek(engine_id, plainDek, encDek);
 }
 
-#ifdef CONFIG_SDP_ENHANCED
 int dek_decrypt_dek_ecdh(dek_t *encDek, dek_t *plainDek, kek_t *drv_key)
 {
 	int res;
@@ -520,7 +500,6 @@ clean:
 
 	return res;
 }
-#endif
 
 static int dek_decrypt_dek(int engine_id, dek_t *encDek, dek_t *plainDek) {
 	int dek_type = encDek->type;
@@ -538,7 +517,6 @@ static int dek_decrypt_dek(int engine_id, dek_t *encDek, dek_t *plainDek) {
 	{
 		kek = get_kek(engine_id, KEK_TYPE_SYM, &ret);
         if (kek) {
-#ifdef CONFIG_SDP_ENHANCED
             ret = dek_aes_decrypt_key(kek, encDek->buf, encDek->len, plainDek->buf, &plainDek->len);
             if (ret) {
                 DEK_LOGE("aes decrypt failed\n");
@@ -546,27 +524,13 @@ static int dek_decrypt_dek(int engine_id, dek_t *encDek, dek_t *plainDek) {
             } else {
                 plainDek->type = DEK_TYPE_PLAIN;
             }
-#else
-            if (dek_aes_decrypt(kek, encDek->buf, plainDek->buf, encDek->len)) {
-                DEK_LOGE("aes decrypt failed\n");
-                dek_add_to_log(engine_id, "aes decrypt failed");
-                plainDek->len = 0;
-            } else {
-                plainDek->len = encDek->len;
-                plainDek->type = DEK_TYPE_PLAIN;
-            }
-#endif
             put_kek(kek);
         } else {
             DEK_LOGE("no KEK_TYPE_SYM for id: %d\n", engine_id);
             dek_add_to_log(engine_id, "decrypt failed, no KEK_TYPE_SYM");
             return -EIO;
         }
-#ifdef CONFIG_SDP_ENHANCED
         return ret;
-#else
-        return 0;
-#endif
 	}
 	case DEK_TYPE_RSA_ENC:
 	{
@@ -611,11 +575,7 @@ static int dek_decrypt_dek(int engine_id, dek_t *encDek, dek_t *plainDek) {
 #ifdef CONFIG_PUB_CRYPTO
 		kek = get_kek(engine_id, KEK_TYPE_ECDH256_PRIV, &ret);
         if(kek) {
-#ifdef CONFIG_SDP_ENHANCED
             ret = dek_decrypt_dek_ecdh(encDek, plainDek, kek);
-#else
-            ret = ecdh_decryptEDEK(encDek, plainDek, kek);
-#endif
             put_kek(kek);
         }else{
             DEK_LOGE("no KEK_TYPE_ECDH256_PRIV for id: %d\n", engine_id);
@@ -642,7 +602,6 @@ int dek_decrypt_dek_efs(int engine_id, dek_t *encDek, dek_t *plainDek) {
 	return dek_decrypt_dek(engine_id, encDek, plainDek);
 }
 
-#ifdef CONFIG_SDP_ENHANCED
 int dek_encrypt_fek(unsigned char *master_key, unsigned int master_key_len,
 					unsigned char *fek, unsigned int fek_len,
 					unsigned char *efek, unsigned int *efek_len)
@@ -660,7 +619,6 @@ int dek_decrypt_fek(unsigned char *master_key, unsigned int master_key_len,
 								efek, efek_len,
 								fek, fek_len);
 }
-#endif
 
 static int dek_on_boot(dek_arg_on_boot *evt) {
 	int ret = 0;

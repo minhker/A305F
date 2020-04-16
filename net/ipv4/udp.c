@@ -994,10 +994,8 @@ int udp_sendmsg(struct sock *sk, struct msghdr *msg, size_t len)
 	ipc.addr = faddr = daddr;
 
 	if (ipc.opt && ipc.opt->opt.srr) {
-		if (!daddr) {
-			err = -EINVAL;
-			goto out_free;
-		}
+		if (!daddr)
+			return -EINVAL;
 		faddr = ipc.opt->opt.faddr;
 		connected = 0;
 	}
@@ -1111,7 +1109,6 @@ do_append_data:
 
 out:
 	ip_rt_put(rt);
-out_free:
 	if (free)
 		kfree(ipc.opt);
 	if (!err)
@@ -1467,7 +1464,7 @@ static void udp_v4_rehash(struct sock *sk)
 	udp_lib_rehash(sk, new_hash);
 }
 
-int __udp_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
+static int __udp_queue_rcv_skb(struct sock *sk, struct sk_buff *skb)
 {
 	int rc;
 
@@ -1751,11 +1748,6 @@ static inline int udp4_csum_init(struct sk_buff *skb, struct udphdr *uh,
 		err = udplite_checksum_init(skb, uh);
 		if (err)
 			return err;
-
-		if (UDP_SKB_CB(skb)->partial_cov) {
-			skb->csum = inet_compute_pseudo(skb, proto);
-			return 0;
-		}
 	}
 
 	return skb_checksum_init_zero_check(skb, proto, uh->check,

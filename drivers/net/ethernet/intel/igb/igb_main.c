@@ -3174,7 +3174,7 @@ static int __igb_close(struct net_device *netdev, bool suspending)
 
 static int igb_close(struct net_device *netdev)
 {
-	if (netif_device_present(netdev) || netdev->dismantle)
+	if (netif_device_present(netdev))
 		return __igb_close(netdev, false);
 	return 0;
 }
@@ -7339,11 +7339,9 @@ static int __igb_shutdown(struct pci_dev *pdev, bool *enable_wake,
 	rtnl_unlock();
 
 #ifdef CONFIG_PM
-	if (!runtime) {
-		retval = pci_save_state(pdev);
-		if (retval)
-			return retval;
-	}
+	retval = pci_save_state(pdev);
+	if (retval)
+		return retval;
 #endif
 
 	status = rd32(E1000_STATUS);

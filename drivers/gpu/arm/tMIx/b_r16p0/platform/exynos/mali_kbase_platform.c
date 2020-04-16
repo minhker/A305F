@@ -285,11 +285,11 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 	gpu_update_config_data_int(np, "gpu_max_clock", &platform->gpu_max_clock);
 
 	if(platform->gpu_max_clock==845000)  
-		platform->gpu_max_clock=1300000;//1001000 1200000 // oc gpu
+		platform->gpu_max_clock=1100000;//1001000 1200000 // oc gpu
 #ifdef CONFIG_CAL_IF
 	platform->gpu_max_clock_limit = (int)cal_dfs_get_max_freq(platform->g3d_cmu_cal_id);
 	if (platform->gpu_max_clock_limit == 845000) 	// oc gpu
-	platform->gpu_max_clock_limit=1300000;
+	platform->gpu_max_clock_limit=1100000;
 #else
 	gpu_update_config_data_int(np, "gpu_max_clock_limit", &platform->gpu_max_clock_limit);
 #endif

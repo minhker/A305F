@@ -21,8 +21,6 @@
 #include <sdp/dek_common.h>
 #include <sdp/dek_aes.h>
 #include <crypto/skcipher.h>
-
-#ifdef CONFIG_SDP_ENHANCED
 #include "../../fs/ext4/sdp/sdp_crypto.h"
 
 inline int __dek_aes_encrypt_key32(struct crypto_aead *tfm,
@@ -49,7 +47,6 @@ inline int __dek_aes_encrypt_key_raw(unsigned char *kek, unsigned int kek_len,
 inline int __dek_aes_decrypt_key_raw(unsigned char  *kek, unsigned int kek_len,
 									unsigned char *ekey, unsigned int ekey_len,
 									unsigned char *out, unsigned int *out_len);
-#endif
 
 static struct crypto_skcipher *dek_aes_key_setup(kek_t *kek)
 {
@@ -135,7 +132,6 @@ int dek_aes_decrypt(kek_t *kek, unsigned char *src, unsigned char *dst, int len)
 		return -ENOMEM;
 }
 
-#ifdef CONFIG_SDP_ENHANCED
 int dek_aes_encrypt_key(kek_t *kek, unsigned char *key, unsigned int key_len,
 						unsigned char *out, unsigned int *out_len)
 {
@@ -354,4 +350,3 @@ inline int __dek_aes_decrypt_key(struct crypto_aead *tfm,
 {
 	return sdp_crypto_aes_gcm_decrypt_pack(tfm, pack);
 }
-#endif

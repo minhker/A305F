@@ -364,8 +364,6 @@ struct himax_ts_data {
 	uint32_t pl_y_min;
 	uint32_t pl_y_max;
 
-	int comm_err_count;
-
 	int rst_gpio;
 	int use_irq;
 	int (*power) (int on);
@@ -483,9 +481,5 @@ extern unsigned int hx_bootmode;
 
 extern int himax_chip_common_suspend(struct himax_ts_data *ts);
 extern int himax_chip_common_resume(struct himax_ts_data *ts);
-
-#ifdef CONFIG_SAMSUNG_TUI
-void stui_report_all_leave_event(struct himax_ts_data *ts);
-#endif
 
 #endif

@@ -343,20 +343,17 @@ static int get_ctl_value_v2(struct usb_mixer_elem_info *cval, int request,
 			    int validx, int *value_ret)
 {
 	struct snd_usb_audio *chip = cval->head.mixer->chip;
-	/* enough space for one range */
-	unsigned char buf[sizeof(__u16) + 3 * sizeof(__u32)];
+	unsigned char buf[4 + 3 * sizeof(__u32)]; /* enough space for one range */
 	unsigned char *val;
-	int idx = 0, ret, val_size, size;
+	int idx = 0, ret, size;
 	__u8 bRequest;
-
-	val_size = uac2_ctl_value_size(cval->val_type);
 
 	if (request == UAC_GET_CUR) {
 		bRequest = UAC2_CS_CUR;
-		size = val_size;
+		size = uac2_ctl_value_size(cval->val_type);
 	} else {
 		bRequest = UAC2_CS_RANGE;
-		size = sizeof(__u16) + 3 * val_size;
+		size = sizeof(buf);
 	}
 
 	memset(buf, 0, sizeof(buf));
@@ -389,17 +386,16 @@ error:
 		val = buf + sizeof(__u16);
 		break;
 	case UAC_GET_MAX:
-		val = buf + sizeof(__u16) + val_size;
+		val = buf + sizeof(__u16) * 2;
 		break;
 	case UAC_GET_RES:
-		val = buf + sizeof(__u16) + val_size * 2;
+		val = buf + sizeof(__u16) * 3;
 		break;
 	default:
 		return -EINVAL;
 	}
 
-	*value_ret = convert_signed_value(cval,
-					  snd_usb_combine_bytes(val, val_size));
+	*value_ret = convert_signed_value(cval, snd_usb_combine_bytes(val, sizeof(__u16)));
 
 	return 0;
 }
@@ -901,14 +897,6 @@ static void volume_control_quirks(struct usb_mixer_elem_info *cval,
 			cval->min = 0x00;
 			cval->max = 0x7f;
 			break;
-		}
-		break;
-
-	case USB_ID(0x0d8c, 0x0103):
-		if (!strcmp(kctl->id.name, "PCM Playback Volume")) {
-			usb_audio_info(chip,
-				 "set volume quirk for CM102-A+/102S+\n");
-			cval->min = -256;
 		}
 		break;
 
@@ -1816,7 +1804,7 @@ static int build_audio_procunit(struct mixer_build *state, int unitid,
 				char *name)
 {
 	struct uac_processing_unit_descriptor *desc = raw_desc;
-	int num_ins;
+	int num_ins = desc->bNrInPins;
 	struct usb_mixer_elem_info *cval;
 	struct snd_kcontrol *kctl;
 	int i, err, nameid, type, len;
@@ -1831,13 +1819,7 @@ static int build_audio_procunit(struct mixer_build *state, int unitid,
 		0, NULL, default_value_info
 	};
 
-	if (desc->bLength < 13) {
-		usb_audio_err(state->chip, "invalid %s descriptor (id %d)\n", name, unitid);
-		return -EINVAL;
-	}
-
-	num_ins = desc->bNrInPins;
-	if (desc->bLength < 13 + num_ins ||
+	if (desc->bLength < 13 || desc->bLength < 13 + num_ins ||
 	    desc->bLength < num_ins + uac_processing_unit_bControlSize(desc, state->mixer->protocol)) {
 		usb_audio_err(state->chip, "invalid %s descriptor (id %d)\n", name, unitid);
 		return -EINVAL;

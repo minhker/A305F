@@ -41,12 +41,6 @@
 #include "fm_low_struc.h"
 #include "radio-s610.h"
 
-#ifdef USE_AUDIO_PM
-#include "../../../../sound/soc/samsung/abox/abox.h"
-#define ABOX_CPU_GEAR_STP		(3)
-#define ABOX_CPU_GEAR_MIN		(12)
-#endif /* USE_AUDIO_PM */
-
 static int radio_region;
 module_param(radio_region, int, 0);
 MODULE_PARM_DESC(radio_region, "Region: 0=Europe/US, 1=Japan");
@@ -120,7 +114,7 @@ static struct v4l2_ctrl_config s610_ctrls[] = {
 				.type	= V4L2_CTRL_TYPE_INTEGER,
 				.name	= "Channel Band",
 				.min	= 0,
-				.max	= 2,
+				.max	= 1,
 				.step	= 1,
 		},
 		[S610_IDX_SOFT_STEREO_BLEND] = { /*0x03*/
@@ -264,23 +258,10 @@ static const struct v4l2_frequency_band s610_bands[] = {
 				| V4L2_TUNER_CAP_RDS
 				| V4L2_TUNER_CAP_RDS_BLOCK_IO
 				| V4L2_TUNER_CAP_FREQ_BANDS,
-				/* Japan region       */
+				/* default region Eu/US */
 				.rangelow	= 76000*FAC_VALUE,
 				.rangehigh	= 90000*FAC_VALUE,
 				.modulation	= V4L2_BAND_MODULATION_FM,
-		},
-		[2] = {
-				.type		= V4L2_TUNER_RADIO,
-				.index		= S610_BAND_FM,
-				.capability = V4L2_TUNER_CAP_LOW
-				| V4L2_TUNER_CAP_STEREO
-				| V4L2_TUNER_CAP_RDS
-				| V4L2_TUNER_CAP_RDS_BLOCK_IO
-				| V4L2_TUNER_CAP_FREQ_BANDS,
-				/* custom region */
-				.rangelow	= 76000*FAC_VALUE,
-				.rangehigh	= 108000*FAC_VALUE,
-				.modulation = V4L2_BAND_MODULATION_FM,
 		},
 };
 
@@ -300,14 +281,6 @@ static struct region_info region_configs[] = {
 			.top_freq = 90000,	/* 90 MHz */
 			.fm_band = 1,
 		},
-		/* Custom */
-		{
-			.chanl_space = FM_CHANNEL_SPACING_200KHZ * FM_FREQ_MUL,
-			.bot_freq = 76000,	/* 76 MHz */
-			.top_freq = 108000,	/* 108 MHz */
-			.fm_band = 2,
-		},
-
 };
 
 static inline bool s610_radio_freq_is_inside_of_the_band(u32 freq, int band)
@@ -1561,13 +1534,9 @@ static int s610_radio_fops_open(struct file *file)
 #ifdef USE_AUDIO_PM
 		if (radio->a_dev) {
 			ret = pm_runtime_get_sync(radio->a_dev);
-			if (ret < 0) {
+			if (ret) {
 				dev_err(radio->v4l2dev.dev,
-					"audio get_sync not work: not suspend %d\n", ret);
-			} else {
-				abox_request_cpu_gear_sync(radio->a_dev,
-					dev_get_drvdata(radio->a_dev), (unsigned long int)radio->dev, ABOX_CPU_GEAR_STP);
-				dev_info(radio->v4l2dev.dev, "(%s)audio get_sync\n", __func__);
+				"audio get_sync not work: not suspend%d\n", ret);
 			}
 		}
 #endif /* USE_AUDIO_PM */
@@ -1674,13 +1643,8 @@ static int s610_radio_fops_release(struct file *file)
 
 		pm_runtime_put_sync(radio->dev);
 #ifdef USE_AUDIO_PM
-		if (radio->a_dev) {
-			abox_request_cpu_gear_sync(radio->a_dev,
-				dev_get_drvdata(radio->a_dev), (unsigned long int)radio->dev, ABOX_CPU_GEAR_MIN);
-
+		if (radio->a_dev)
 			pm_runtime_put_sync(radio->a_dev);
-			dev_info(radio->v4l2dev.dev, "(%s)audio put_sync\n", __func__);
-		}
 #endif /* USE_AUDIO_PM */
 		exynos_pmu_shared_reg_disable();
 		s610_core_unlock(radio->core);
@@ -1915,9 +1879,9 @@ static struct device_node *exynos_audio_parse_dt(struct s610_radio *radio)
 	struct platform_device *pdev = NULL;
 	struct device_node *np = NULL;
 
-	np = of_find_compatible_node(NULL, NULL, "samsung,abox");
+	np = of_find_compatible_node(NULL, NULL, "samsung,s1403x");
 	if (!np) {
-		dev_err(radio->dev, "abox device is not available\n");
+		dev_err(radio->dev, "s1403x device is not available\n");
 		return NULL;
 	}
 
@@ -1927,7 +1891,6 @@ static struct device_node *exynos_audio_parse_dt(struct s610_radio *radio)
 		return NULL;
 	}
 	radio->a_dev = &pdev->dev;
-	dev_info(radio->v4l2dev.dev, "(%s)audio get dev\n", __func__);
 
 	return np;
 }
@@ -2087,9 +2050,26 @@ static int s610_radio_probe(struct platform_device *pdev)
 	radio->pdev = pdev;
 	gradio = radio;
 
+#ifdef USE_FM_LNA_ENABLE
+	radio->elna_gpio = of_get_named_gpio(dnode, "elna_gpio", 0);
+	if (!gpio_is_valid(radio->elna_gpio)) {
+		dev_err(dev, "(%s) elna_gpio invalid. Disable elna_gpio control\n",
+			__func__);
+		radio->elna_gpio = -EINVAL;
+	} else {
+		ret = gpio_request_one(radio->elna_gpio, GPIOF_OUT_INIT_LOW,
+					"LNA_GPIO_EN");
+		if (ret)
+			gpio_set_value(radio->elna_gpio, GPIO_LOW);
+		dev_info(dev, "(%s) Enable elna_gpio control :%d\n",
+			__func__, gpio_get_value(radio->elna_gpio));
+	}
+#endif /* USE_FM_LNA_ENABLE */
+
 #ifdef USE_AUDIO_PM
 	if (!exynos_audio_parse_dt(radio)) {
-		dev_err(dev, "audio dt not used\n");
+		ret = -EINVAL;
+		goto alloc_err4;
 	}
 #endif /* USE_AUDIO_PM */
 
@@ -2367,24 +2347,6 @@ skip_vol_sel:
 	if (ret)
 		radio->agc_thresh = 0xFF64;
 	dev_info(radio->dev, "agc thresh: %d\n", radio->agc_thresh);
-
-#ifdef USE_FM_LNA_ENABLE
-	if(radio->without_elna != 1) {
-		radio->elna_gpio = of_get_named_gpio(dnode, "elna_gpio", 0);
-		if (!gpio_is_valid(radio->elna_gpio)) {
-			dev_err(dev, "(%s) elna_gpio invalid. Disable elna_gpio control\n",
-				__func__);
-			radio->elna_gpio = -EINVAL;
-		} else {
-			ret = gpio_request_one(radio->elna_gpio, GPIOF_OUT_INIT_LOW,
-						"LNA_GPIO_EN");
-			if (ret)
-				gpio_set_value(radio->elna_gpio, GPIO_LOW);
-			dev_info(dev, "(%s) Enable elna_gpio control :%d\n",
-				__func__, gpio_get_value(radio->elna_gpio));
-		}
-	}
-#endif /* USE_FM_LNA_ENABLE */
 
 	pm_runtime_put_sync(dev);
 	exynos_pmu_shared_reg_disable();

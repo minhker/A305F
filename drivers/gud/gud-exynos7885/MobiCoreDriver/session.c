@@ -108,10 +108,11 @@ static void wsm_free(struct tee_session *session, struct tee_wsm *wsm)
 		return;
 	}
 
-	mc_dev_devel("freeing wsm %p: mmu %p cbuf %p va %lx len %u sva %x",
-		     wsm, wsm->mmu, wsm->cbuf, wsm->va, wsm->len, wsm->sva);
 	/* Free MMU table */
 	client_mmu_free(session->client, wsm->va, wsm->mmu, wsm->cbuf);
+	/* Delete wsm object */
+	mc_dev_devel("freed wsm %p: mmu %p cbuf %p va %lx len %u sva %x",
+		     wsm, wsm->mmu, wsm->cbuf, wsm->va, wsm->len, wsm->sva);
 	/* Decrement debug counter */
 	atomic_dec(&g_ctx.c_wsms);
 	wsm->in_use = false;
@@ -121,7 +122,7 @@ static void wsm_free(struct tee_session *session, struct tee_wsm *wsm)
 static int hash_path_and_data(struct task_struct *task, u8 *hash,
 			      const void *data, unsigned int data_len)
 {
-	struct file *exe_file;
+	struct mm_struct *mm = task->mm;
 	struct crypto_shash *tfm;
 	char *buf;
 	char *path;
@@ -132,13 +133,13 @@ static int hash_path_and_data(struct task_struct *task, u8 *hash,
 	if (!buf)
 		return -ENOMEM;
 
-	exe_file = get_task_exe_file(task);
-	if (!exe_file) {
+	down_read(&mm->mmap_sem);
+	if (!mm->exe_file) {
 		ret = -ENOENT;
 		goto end;
 	}
 
-	path = d_path(&exe_file->f_path, buf, PAGE_SIZE);
+	path = d_path(&mm->exe_file->f_path, buf, PAGE_SIZE);
 	if (IS_ERR(path)) {
 		ret = PTR_ERR(path);
 		goto end;
@@ -182,6 +183,7 @@ static int hash_path_and_data(struct task_struct *task, u8 *hash,
 	crypto_free_shash(tfm);
 
 end:
+	up_read(&mm->mmap_sem);
 	free_page((unsigned long)buf);
 
 	return ret;
@@ -320,7 +322,7 @@ static int check_prepare_identity(const struct mc_identity *identity,
 	}
 
 	/* Check gid field */
-	if (identity->login_type == LOGIN_GROUP ||
+		if (identity->login_type == LOGIN_GROUP ||
 	    identity->login_type == LOGIN_GROUP_APPLICATION) {
 		const struct cred *cred = __task_cred(task);
 
@@ -597,9 +599,7 @@ int session_notify_swd(struct tee_session *session)
 		return -EINVAL;
 	}
 
-	session->nq_session.notif_count++;
-	return mcp_notify(&session->mcp_session,
-			  session->nq_session.notif_count);
+	return mcp_notify(&session->mcp_session);
 }
 
 /*
