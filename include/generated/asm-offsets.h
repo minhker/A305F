@@ -89,6 +89,6 @@
 #define ARM_SMCCC_RES_X0_OFFS 0 /* offsetof(struct arm_smccc_res, a0) */
 #define ARM_SMCCC_RES_X2_OFFS 16 /* offsetof(struct arm_smccc_res, a2) */
 
-#define TRAMP_VALIAS -274903089152 /* TRAMP_VALIAS */
+#define TRAMP_VALIAS -274905186304 /* TRAMP_VALIAS */
 
 #endif

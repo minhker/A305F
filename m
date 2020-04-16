@@ -50,6 +50,9 @@ CR_CONFG_A205=exynos7885-a20v1_P_defconfig
 CR_VARIANT_A205=A205
 CR_CONFG_A305=exynos7885-a30v2_defconfig
 CR_VARIANT_A305=A305
+CR_CONFG_A307=exynos7885-a30s_v1_P_defconfig
+CR_VARIANT_A307=A307
+
 
 # Script functions
 
@@ -69,20 +72,7 @@ else
      rm -rf $CR_DTS/*.dtb          
 fi
 
-BUILD_IMAGE_NAME()
-{
-	CR_IMAGE_NAME=$CR_NAME-$CR_VERSION-$CR_VARIANT-$CR_DATE
 
-  # Flashable_script
-  if [ $CR_VARIANT = $CR_VARIANT_A205 ]; then
-    FL_VARIANT="A205X"
-    FL_MODEL=a205X
-  fi
-  if [ $CR_VARIANT = $CR_VARIANT_A305 ]; then
-    FL_VARIANT="A305X"
-    FL_MODEL=a305X
-  fi
-}
 
 
 BUILD_ZIMAGE()
@@ -121,8 +111,8 @@ clear
 echo "----------------------------------------------"
 echo "$CR_NAME $CR_VERSION Build Script"
 echo "----------------------------------------------"
-PS3='Please select your option (1-4): '
-menuvar=("SM-A205" "SM-A305" "Build_all" "Exit")
+PS3='Please select your option (1-5): '
+menuvar=("SM-A205" "SM-A305" "SM-A307" "Build_all" "Exit")
 select menuvar in "${menuvar[@]}"
 do
     case $menuvar in
@@ -148,6 +138,17 @@ do
             echo "$CR_VARIANT kernel build and coppy finished."
 	    break
             ;;
+	"SM-A307")
+             clear
+            echo "Starting $CR_VARIANT_A307 kernel build..."
+            CR_VARIANT=$CR_VARIANT_A307
+            CR_CONFG=$CR_CONFG_A307
+            BUILD_ZIMAGE
+            #PACK_BOOT_IMG
+	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_P_a30s_v12_pro/Image
+            echo "$CR_VARIANT kernel build and coppy finished."
+	    break
+            ;;
 	"Build_all")
             clear
             echo "Starting $CR_VARIANT_A205 kernel build..."
@@ -164,6 +165,14 @@ do
             BUILD_ZIMAGE
             #PACK_BOOT_IMG
 	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_P_a30_v12_pro/Image
+            echo "$CR_VARIANT kernel build and coppy finished."
+	     clear
+            echo "Starting $CR_VARIANT_A307 kernel build..."
+            CR_VARIANT=$CR_VARIANT_A307
+            CR_CONFG=$CR_CONFG_A307
+            BUILD_ZIMAGE
+            #PACK_BOOT_IMG
+	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_P_a30s_v12_pro/Image
             echo "$CR_VARIANT kernel build and coppy finished."
 	    break
             ;;

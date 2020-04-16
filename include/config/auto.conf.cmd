@@ -535,6 +535,7 @@ deps_config := \
 	drivers/gpu/ipu-v3/Kconfig \
 	drivers/gpu/host1x/Kconfig \
 	drivers/gpu/vga/Kconfig \
+	drivers/gpu/arm/tMIx/b_r16p0_a30s/Kconfig \
 	drivers/gpu/arm/tMIx/b_r16p0/platform/exynos/Kconfig \
 	drivers/gpu/arm/tMIx/b_r16p0/platform/Kconfig \
 	drivers/gpu/arm/tMIx/b_r16p0/Kconfig \
