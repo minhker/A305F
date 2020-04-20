@@ -294,8 +294,6 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 	gpu_update_config_data_int(np, "gpu_min_clock", &platform->gpu_min_clock);
 	gpu_update_config_data_int(np, "gpu_dvfs_bl_config_clock", &platform->gpu_dvfs_config_clock);
 	gpu_update_config_data_int(np, "gpu_default_voltage", &platform->gpu_default_vol);
-	if(platform->gpu_default_vol==80000) //drop gpu default vol
-		platform->gpu_default_vol=75000;
 	gpu_update_config_data_int(np, "gpu_cold_minimum_vol", &platform->cold_min_vol);
 	gpu_update_config_data_int(np, "gpu_voltage_offset_margin", &platform->gpu_default_vol_margin);
 	gpu_update_config_data_bool(np, "gpu_tmu_control", &platform->tmu_status);

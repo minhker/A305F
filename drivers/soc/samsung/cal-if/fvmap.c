@@ -13,7 +13,7 @@
 
 #define FVMAP_SIZE		(SZ_8K)
 #define STEP_UV			(6250)
-
+#define step			(6250)
 void __iomem *fvmap_base;
 void __iomem *sram_fvmap_base;
 
@@ -226,9 +226,9 @@ int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 		}
 		if(num_of_lv==17){
 			if(fv_table->table[0].volt==2496000)
-				fv_table->table[0].volt=1262500;//1143750
+				fv_table->table[0].volt=1300000;//1143750
 			if(fv_table->table[1].volt==2392000)//not work
-				fv_table->table[1].volt=1262500;//1143750
+				fv_table->table[1].volt=1300000;//1143750
 		}
 		table[i] = fv_table->table[i].volt;
 		pr_info("  num_of_lv : %u, table[i].volt : %u,Minhker98voltage_table\n",
@@ -487,14 +487,14 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
 				new->table[j].rate, new->table[j].volt,
 				volt_offset_percent);
-			}
+			}/*
 			else if(fvmap_header[i].num_of_lv==17&&fvmap_header[i].num_of_members==2) //for big
 			{
 				if(old->table[j].rate==2496000)
-					new->table[j].volt = old->table[j].volt=1262500;//1143750
+					new->table[j].volt = old->table[j].volt=1300000;//1143750
 				if(old->table[j].rate==2392000)
-					new->table[j].volt = old->table[j].volt=1262500;//1143750
-				/*if(old->table[j].rate==2288000)
+					new->table[j].volt = old->table[j].volt=1300000;//1143750
+				if(old->table[j].rate==2288000)
 					new->table[j].volt = old->table[j].volt=1143750;//1143750
 				if(old->table[j].rate<=2184000&&old->table[j].rate>1352000)
 					{
@@ -536,13 +536,13 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 					new->table[j].volt = old->table[j].volt-6250;//600000
 				if(old->table[j].rate==208000)
 					new->table[j].volt = old->table[j].volt-6250;//600000
-				//old->table[j].volt=old->table[j].volt-6250-6250-6250-6250;*/
+				//old->table[j].volt=old->table[j].volt-6250-6250-6250-6250;
 				new->table[j].rate = old->table[j].rate;
 				new->table[j].volt = old->table[j].volt;
 			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
 				new->table[j].rate, new->table[j].volt,
 				volt_offset_percent);
-			}
+			}*/
 
 			else if(fvmap_header[i].num_of_lv==18&&fvmap_header[i].num_of_members==4) //for litle
 			{
@@ -571,19 +571,22 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 				if(old->table[j].rate==1586000)
 					new->table[j].volt = old->table[j].volt=950000-12500;//950000
 
-				if(old->table[j].rate<1014000&&old->table[j].rate>546000)
+				if(old->table[j].rate<=546000&&old->table[j].rate>=208000)
 					{
-						new->table[j].volt=old->table[j].volt-6250;
-						//new->table[j].volt = old->table[j].volt;
+
+						old->table[j].volt=old->table[j].volt-6250;
+						new->table[j].volt = old->table[j].volt;
 					}
 				if(old->table[j].rate==546000)
-					new->table[j].volt = old->table[j].volt-6250;//600000
+					
+					old->table[j].volt = old->table[j].volt-6250;//600000
+					
 				if(old->table[j].rate==449000)
-					new->table[j].volt = old->table[j].volt-6250;//600000
+					old->table[j].volt = old->table[j].volt-6250;//600000
 				if(old->table[j].rate==343000)
-					new->table[j].volt = old->table[j].volt-6250-6250;//600000
+					old->table[j].volt = old->table[j].volt-6250-6250;//600000
 				if(old->table[j].rate==208000)
-					new->table[j].volt = old->table[j].volt-6250-6250;//600000*/
+					old->table[j].volt = old->table[j].volt-6250-6250-6250;//600000*/
 				new->table[j].rate = old->table[j].rate;
 				new->table[j].volt = old->table[j].volt;
 			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
@@ -595,7 +598,7 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 			{
 				if(old->table[j].rate==1300000)
 					{
-						old->table[j].volt=old->table[j].volt-6250-6250;//1106250
+						old->table[j].volt=old->table[j].volt-6250;//1106250
 						new->table[j].volt = old->table[j].volt;
 					}
 				if(old->table[j].rate==1200000)

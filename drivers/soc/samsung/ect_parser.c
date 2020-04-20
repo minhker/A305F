@@ -569,7 +569,7 @@ static int ect_parse_ap_thermal_function(int parser_version, void *address, stru
 			range->max_frequency=1872000;
 		//for litte
 		if(range->lower_bound_temperature==20&&range->max_frequency==1690000)
-			range->max_frequency=1794000; //
+			range->max_frequency=1898000; //
 		if(range->lower_bound_temperature==76&&range->max_frequency==1690000)
 			range->max_frequency=1794000;
 		if(range->lower_bound_temperature==81&&range->max_frequency==1690000)

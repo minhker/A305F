@@ -862,9 +862,9 @@ static __init int init_table(struct exynos_cpufreq_domain *domain)
 			if(table[index]==2002)
 				volt_table[index]=1193750;
 			if(table[index]==2392)
-				volt_table[index]=1262500;
+				volt_table[index]=1300000;
 			if(table[index]==2496)
-				volt_table[index]=1262500;
+				volt_table[index]=1300000;
 			dev_pm_opp_add(get_cpu_device(cpumask_first(&domain->cpus)),
 					table[index] * 1000, volt_table[index]);
 		}
