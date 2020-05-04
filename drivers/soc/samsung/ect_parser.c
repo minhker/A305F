@@ -560,20 +560,22 @@ static int ect_parse_ap_thermal_function(int parser_version, void *address, stru
 		if(range->lower_bound_temperature==20&&range->max_frequency==2184000)
 			range->max_frequency=2288000;
 		if(range->lower_bound_temperature==76&&range->max_frequency==1768000)
-			range->max_frequency=2184000;
-		if(range->lower_bound_temperature==81&&range->max_frequency==1768000)
 			range->max_frequency=2080000;
-		if(range->lower_bound_temperature==86&&range->max_frequency==1560000)
+		if(range->lower_bound_temperature==81&&range->max_frequency==1768000)
 			range->max_frequency=1976000;
-		if(range->lower_bound_temperature==91&&range->max_frequency==728000)
+		if(range->lower_bound_temperature==86&&range->max_frequency==1560000)
 			range->max_frequency=1872000;
+		if(range->lower_bound_temperature==91&&range->max_frequency==728000)
+			range->max_frequency=1768000;
 		//for litte
 		if(range->lower_bound_temperature==20&&range->max_frequency==1690000)
-			range->max_frequency=1898000; //
+			range->max_frequency=1794000; //
 		if(range->lower_bound_temperature==76&&range->max_frequency==1690000)
-			range->max_frequency=1794000;
-		if(range->lower_bound_temperature==81&&range->max_frequency==1690000)
 			range->max_frequency=1690000;
+		if(range->lower_bound_temperature==81&&range->max_frequency==1690000)
+			range->max_frequency=1586000;
+		if(range->lower_bound_temperature==86&&range->max_frequency==1586000)
+			range->max_frequency=1482000;
 		//for gpu
 		if(range->lower_bound_temperature==20&&range->max_frequency==1100000)
 			range->max_frequency=1300000;

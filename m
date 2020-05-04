@@ -28,7 +28,7 @@ CR_RAMDISK=$CR_DIR/mk/Ramdisk
 # Compiled image name and location (Image/zImage)
 CR_KERNEL=$CR_DIR/arch/arm64/boot/Image
 # Kernel Name and Version
-CR_VERSION=V14.5_Pro
+CR_VERSION=V14.4_Little
 CR_NAME=MinhKer_Q
 # Thread count
 CR_JOBS=5
@@ -47,9 +47,13 @@ export PLATFORM_VERSION=$CR_PLATFORM
 export $CR_ARCH
 ##########################################
 CR_CONFG_A305=exynos7885-a30v2_Q_defconfig
-CR_VARIANT_A305=A305F
+CR_VARIANT_A305=A305
 CR_CONFG_A205=exynos7885-a20v2_Q_defconfig
 CR_VARIANT_A205=A205
+CR_CONFG_A405=exynos7885-a40v2_Q_defconfig
+CR_VARIANT_A405=A405
+CR_CONFG_M205=exynos7885-m20v2_Q_defconfig
+CR_VARIANT_M205=M205
 
 # Script functions
 
@@ -105,8 +109,8 @@ clear
 echo "----------------------------------------------"
 echo "$CR_NAME $CR_VERSION Build Script"
 echo "----------------------------------------------"
-PS3='Please select your option (1-4): '
-menuvar=("SM-A205" "SM-A305" "build_all" "Exit")
+PS3='Please select your option (1-5): '
+menuvar=("SM-A205" "SM-A305" "SM-M205" "SM-A405" "build_all" "Exit")
 select menuvar in "${menuvar[@]}"
 do
     case $menuvar in
@@ -118,6 +122,28 @@ do
 	    BUILD_ZIMAGE
            # PACK_BOOT_IMG
 	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_a20_v14.4_pro/Image
+             echo "$CR_VARIANT kernel build and coppy finished."
+	    break
+            ;;
+	"SM-M205")
+            clear
+            echo "Starting $CR_VARIANT_M205 kernel build..."
+            CR_VARIANT=$CR_VARIANT_M205
+            CR_CONFG=$CR_CONFG_M205
+	    BUILD_ZIMAGE
+           # PACK_BOOT_IMG
+	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_M20_v14.4_little/Image
+             echo "$CR_VARIANT kernel build and coppy finished."
+	    break
+            ;;
+	"SM-A405")
+            clear
+            echo "Starting $CR_VARIANT_A405 kernel build..."
+            CR_VARIANT=$CR_VARIANT_A405
+            CR_CONFG=$CR_CONFG_A405
+	    BUILD_ZIMAGE
+           # PACK_BOOT_IMG
+	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_a40_v14.4_little/Image
              echo "$CR_VARIANT kernel build and coppy finished."
 	    break
             ;;
@@ -149,6 +175,16 @@ do
             #PACK_BOOT_IMG
 	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_a30_v14.5_Pro/Image
             echo "$CR_VARIANT kernel build and coppy finished."
+
+            clear
+            echo "Starting $CR_VARIANT_A405 kernel build..."
+            CR_VARIANT=$CR_VARIANT_A405
+            CR_CONFG=$CR_CONFG_A405
+	    BUILD_ZIMAGE
+           # PACK_BOOT_IMG
+	    cp $CR_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_a40_v14.4_little/Image
+             echo "$CR_VARIANT kernel build and coppy finished."
+	    
 	    break
             ;;
         "Exit")

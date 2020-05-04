@@ -1,1 +1,0 @@
-#define UTS_RELEASE "4.4.177-MinhKer_Q-V14.5_Pro-A305F-20200419"
