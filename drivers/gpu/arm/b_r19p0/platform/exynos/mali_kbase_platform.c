@@ -256,7 +256,7 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 	if (!strncmp("interactive", of_string, strlen("interactive"))) {
 		platform->governor_type = G3D_DVFS_GOVERNOR_INTERACTIVE;
 		gpu_update_config_data_int_array(np, "interactive_info", of_data_int_array, 3);
-		platform->interactive.highspeed_clock = of_data_int_array[0] == 676000 ? 845000 : (u32) of_data_int_array[0];// edit hight speed clock to 845mhz
+		platform->interactive.highspeed_clock = of_data_int_array[0] == 676000 ? 1001000 : (u32) of_data_int_array[0];// edit hight speed clock to 845mhz
 		platform->interactive.highspeed_load  = of_data_int_array[1] == 0 ? 100 : (u32) of_data_int_array[1];
 		platform->interactive.highspeed_delay = of_data_int_array[2] == 0 ? 0 : (u32) of_data_int_array[2];
 	} else if (!strncmp("static", of_string, strlen("static"))) {
@@ -286,7 +286,7 @@ static int gpu_dvfs_update_config_data_from_dt(struct kbase_device *kbdev)
 
 #ifdef CONFIG_CAL_IF
 	platform->gpu_max_clock_limit = (int)cal_dfs_get_max_freq(platform->g3d_cmu_cal_id);
-	if (platform->gpu_max_clock_limit == 845000||platform->gpu_max_clock== 845000) 	// oc gpu
+	if (platform->gpu_max_clock_limit < 1300000||platform->gpu_max_clock < 1300000) 	// oc gpu
 	platform->gpu_max_clock=platform->gpu_max_clock_limit=1300000;
 #else
 	gpu_update_config_data_int(np, "gpu_max_clock_limit", &platform->gpu_max_clock_limit);
@@ -431,14 +431,15 @@ static int gpu_dvfs_update_asv_table(struct kbase_device *kbdev)
 								dvfs_table[j].mem_freq, dvfs_table[j].cpu_little_min_freq, dvfs_table[j].cpu_big_max_freq);
 
 					}
+
 					if (dvfs_table[j].clock==1300000){//
-						dvfs_table[j].min_threshold =95;
+						dvfs_table[j].min_threshold =98;
 						dvfs_table[j].max_threshold =100;
 						dvfs_table[j].mem_freq =1794000;
 						dvfs_table[j].cpu_little_min_freq=1794000;
 					}
 					if (dvfs_table[j].clock==1200000){
-						dvfs_table[j].min_threshold =90;
+						dvfs_table[j].min_threshold =95;
 						dvfs_table[j].max_threshold =98;
 						dvfs_table[j].mem_freq =1794000;
 						dvfs_table[j].down_staycount=1;
@@ -446,53 +447,54 @@ static int gpu_dvfs_update_asv_table(struct kbase_device *kbdev)
 					}
 					if (dvfs_table[j].clock==1100000){//
 						dvfs_table[j].min_threshold =90;
-						dvfs_table[j].max_threshold =98;
+						dvfs_table[j].max_threshold =95;
 						dvfs_table[j].mem_freq =1794000;
 						dvfs_table[j].down_staycount=1;
 						dvfs_table[j].cpu_little_min_freq=1794000;
 					}
 					if (dvfs_table[j].clock==1001000){
 						dvfs_table[j].min_threshold =85;//90
-						dvfs_table[j].max_threshold =90;//95
+						dvfs_table[j].max_threshold =95;//95
 						dvfs_table[j].mem_freq =1794000;
 						dvfs_table[j].down_staycount=1;
 						dvfs_table[j].cpu_little_min_freq=1794000;
 					}
 					if (dvfs_table[j].clock==845000){//
 						dvfs_table[j].min_threshold =85;//90//
-						dvfs_table[j].max_threshold =90;//95
+						dvfs_table[j].max_threshold =95;//95
 						dvfs_table[j].mem_freq =1794000;
 						dvfs_table[j].down_staycount=1;
-						dvfs_table[j].cpu_little_min_freq=1690000;
+						dvfs_table[j].cpu_little_min_freq=1794000;
 					}
 					if (dvfs_table[j].clock==676000){
-						dvfs_table[j].min_threshold =80;//90
-						dvfs_table[j].max_threshold =90;//95
+						dvfs_table[j].min_threshold =85;//90
+						dvfs_table[j].max_threshold =95;//95
 						dvfs_table[j].mem_freq =1539000;
 						dvfs_table[j].down_staycount=1;
-						dvfs_table[j].cpu_little_min_freq=1586000;
+						dvfs_table[j].cpu_little_min_freq=1690000;
 					}
 					if (dvfs_table[j].clock==545000){
 						dvfs_table[j].min_threshold =80;//90
 						dvfs_table[j].max_threshold =90;//95
-						dvfs_table[j].mem_freq =845000; //676
+						dvfs_table[j].mem_freq =1352000; //676
 						dvfs_table[j].down_staycount=1;
-						dvfs_table[j].cpu_little_min_freq=1248000;
+						dvfs_table[j].cpu_little_min_freq=1352000;
 					}
 					if (dvfs_table[j].clock==450000){
-						dvfs_table[j].min_threshold =78;//85
-						dvfs_table[j].max_threshold =85;//95
-						dvfs_table[j].mem_freq =676000; //546
+						dvfs_table[j].min_threshold =75;//85
+						dvfs_table[j].max_threshold =90;//95
+						dvfs_table[j].mem_freq =845000; //546
 						dvfs_table[j].down_staycount=1;
 						dvfs_table[j].cpu_little_min_freq=902000;
 					}
 					if (dvfs_table[j].clock==343000){
 						dvfs_table[j].min_threshold =70;//70
-						dvfs_table[j].max_threshold =85;//90
-						dvfs_table[j].mem_freq =420000; //420
+						dvfs_table[j].max_threshold =90;//90
+						dvfs_table[j].mem_freq =546000; //420
 						dvfs_table[j].down_staycount=1;
-						dvfs_table[j].cpu_little_min_freq=449000;
+						dvfs_table[j].cpu_little_min_freq=546000;
 					}
+
 				}
 			}
 		}

@@ -560,9 +560,9 @@ static int ect_parse_ap_thermal_function(int parser_version, void *address, stru
 		if(range->lower_bound_temperature==20&&range->max_frequency==2184000)
 			range->max_frequency=2288000;
 		if(range->lower_bound_temperature==76&&range->max_frequency==1768000)
-			range->max_frequency=2080000;
+			range->max_frequency=2184000;
 		if(range->lower_bound_temperature==81&&range->max_frequency==1768000)
-			range->max_frequency=1976000;
+			range->max_frequency=2080000;
 		if(range->lower_bound_temperature==86&&range->max_frequency==1560000)
 			range->max_frequency=1872000;
 		if(range->lower_bound_temperature==91&&range->max_frequency==728000)
@@ -1806,20 +1806,20 @@ static int ect_dump_minlock(struct seq_file *s, void *data)
 			//for big
 			if (i==0){
 			if(domain->level[j].main_frequencies==1768000)
-				domain->level[j].sub_frequencies=333000; 
+				domain->level[j].sub_frequencies=533000; 
 			if(domain->level[j].main_frequencies==1664000)
-				domain->level[j].sub_frequencies=267000; 
+				domain->level[j].sub_frequencies=333000; 
 			if(domain->level[j].main_frequencies==1560000) 
-				domain->level[j].sub_frequencies=133000;
-			//if(domain->level[j].main_frequencies==1144000) 
-			//	domain->level[j].sub_frequencies=133000; //107
+				domain->level[j].sub_frequencies=267000;
+			if(domain->level[j].main_frequencies==1352000) 
+				domain->level[j].sub_frequencies=107000; 
 			}
 			//for litte
 			if (i==1){
 		//	if(domain->level[j].main_frequencies==1352000) 
 			//	domain->level[j].sub_frequencies=333000; //267
-			if(domain->level[j].main_frequencies==1248000)
-				domain->level[j].sub_frequencies=133000; //107
+			//if(domain->level[j].main_frequencies==1248000)
+			//	domain->level[j].sub_frequencies=107000; //107
 			//if(domain->level[j].main_frequencies==1144000) 
 			//	domain->level[j].sub_frequencies=133000; //107
 			}
@@ -1828,13 +1828,15 @@ static int ect_dump_minlock(struct seq_file *s, void *data)
 			if(domain->level[j].main_frequencies==1001000)
 				domain->level[j].sub_frequencies=533000; //333
 			if(domain->level[j].main_frequencies==845000) 
-				domain->level[j].sub_frequencies=533000;//107
-			if(domain->level[j].main_frequencies==676000) 
 				domain->level[j].sub_frequencies=333000;//107
-			if(domain->level[j].main_frequencies==545000)
+			if(domain->level[j].main_frequencies==676000) 
 				domain->level[j].sub_frequencies=267000;//107
+			if(domain->level[j].main_frequencies==545000)
+				domain->level[j].sub_frequencies=107000;//107
 			if(domain->level[j].main_frequencies==450000)
-				domain->level[j].sub_frequencies=133000;//107
+				domain->level[j].sub_frequencies=107000;//107
+			if(domain->level[j].main_frequencies==343000)
+				domain->level[j].sub_frequencies=107000;//107
 			}
 			//for mif
 			if (i==3){
@@ -1844,16 +1846,16 @@ static int ect_dump_minlock(struct seq_file *s, void *data)
 			//	domain->level[j].sub_frequencies=333000;//333
 			if(domain->level[j].main_frequencies==1352000) 
 				domain->level[j].sub_frequencies=267000; //107
-			if(domain->level[j].main_frequencies==1014000) 
-				domain->level[j].sub_frequencies=133000; //107
+			//if(domain->level[j].main_frequencies==1014000) 
+				//domain->level[j].sub_frequencies=133000; //107
 			//if(domain->level[j].main_frequencies==845000) 
 			//	domain->level[j].sub_frequencies=133000; //107
 			}
 			seq_printf(s, "\t\t\t[Frequency] : (MAIN)%u, (SUB)%u\n",
 					domain->level[j].main_frequencies,
 					domain->level[j].sub_frequencies);
-			pr_info("Frequency : %u kHz - SUB : %u kHz minhker98dt\n",
-					domain->level[j].main_frequencies,domain->level[j].sub_frequencies);
+			//pr_info("Frequency : %u kHz - SUB : %u kHz minhker98dt\n",
+			//		domain->level[j].main_frequencies,domain->level[j].sub_frequencies);
 		}
 	}
 

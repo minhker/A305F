@@ -855,16 +855,8 @@ static __init int init_table(struct exynos_cpufreq_domain *domain)
 		else {
 			domain->freq_table[index].frequency = table[index];
 			/* Add OPP table to first cpu of domain */
-			if(table[index]==1794)
-				volt_table[index]=1043750;
-			if(table[index]==1898)
-				volt_table[index]=1193750;
-			if(table[index]==2002)
-				volt_table[index]=1193750;
-			if(table[index]==2392)
-				volt_table[index]=1300000;
-			if(table[index]==2496)
-				volt_table[index]=1300000;
+			//if(table[index]==1794)
+				//volt_table[index]=1043750;
 			dev_pm_opp_add(get_cpu_device(cpumask_first(&domain->cpus)),
 					table[index] * 1000, volt_table[index]);
 		}
@@ -986,20 +978,35 @@ static int init_constraint_table_ect(struct exynos_cpufreq_domain *domain,
 			//for litte
 			if(domain->id==0)
 			{
+				if(freq==1482000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=533000;
+				if(freq==1352000&&ect_domain->level[c_index].sub_frequencies==267000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=333000;
 				if(freq==1248000&&ect_domain->level[c_index].sub_frequencies==107000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=333000;
+				if(freq==1144000&&ect_domain->level[c_index].sub_frequencies==107000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=267000;
+				if(freq==1014000&&ect_domain->level[c_index].sub_frequencies==107000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=267000;
+				if(freq==902000&&ect_domain->level[c_index].sub_frequencies==107000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
+				if(freq==839000&&ect_domain->level[c_index].sub_frequencies==107000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
 			}
 			if(domain->id==1)
 			{
 				if(freq==1768000)
-					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=333000;
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=533000;
 				if(freq==1560000)
+					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=333000;
+				if(freq==1352000||freq==1144000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=267000;
-				if(freq==1352000)
+				if(freq==936000||freq==728000)
 					dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
 				//if(freq==1144000)
 				//	dm->c.freq_table[index].constraint_freq= ect_domain->level[c_index].sub_frequencies=133000;
 			}
+
 				valid_row = true;
 				break;
 			}
@@ -1050,10 +1057,11 @@ static int init_constraint_table_dt(struct exynos_cpufreq_domain *domain,
 		// for big
 		if(freq==2496000||freq==2392000||freq==2288000||freq==2184000||freq==2080000||freq==1976000||freq==1872000)
 			dm->c.freq_table[index].constraint_freq=1794000;
-		if(freq==520000)
-			dm->c.freq_table[index].constraint_freq=546000;
-		if(freq==312000||freq==208000)
-			dm->c.freq_table[index].constraint_freq=420000;
+	/*	//if(freq==520000)
+		//	dm->c.freq_table[index].constraint_freq=546000;
+		//if(freq==312000||freq==208000)
+			//dm->c.freq_table[index].constraint_freq=420000;
+*/
 		for (c_index = 0; c_index < size / 2; c_index++) {
 					
 			/* find row same or nearby frequency */
@@ -1063,38 +1071,35 @@ static int init_constraint_table_dt(struct exynos_cpufreq_domain *domain,
 			// for big
 			if(freq==1768000)
 			{
-				dm->c.freq_table[index].constraint_freq=1539000;
+				dm->c.freq_table[index].constraint_freq=1794000;
 			}
 			if(freq==1664000)
 			{
-				dm->c.freq_table[index].constraint_freq=1539000;
+				dm->c.freq_table[index].constraint_freq=1794000;
 			}
 			if(freq==1560000)
 			{
-				dm->c.freq_table[index].constraint_freq=1352000;
+				dm->c.freq_table[index].constraint_freq=1539000;
 			}
-			if(freq==1352000&&dm->c.freq_table[index].constraint_freq==1352000)
-			{
-				dm->c.freq_table[index].constraint_freq=1014000;
-			}
-			if(freq==1144000&&dm->c.freq_table[index].constraint_freq==1014000)
+			if(freq==936000)
 			{
 				dm->c.freq_table[index].constraint_freq=845000;
 			}
-			if(freq==936000&&table[c_index].constraint_freq==1014000)
+			if(freq==728000)
 			{
 				dm->c.freq_table[index].constraint_freq=676000;
 			}
-			if(freq==728000)
+			if(freq==520000)
 			{
 				dm->c.freq_table[index].constraint_freq=546000;
 			}
+
 			if (freq >= table[c_index].master_freq)
 			{
 				break;
 			}
 		}
-		pr_info("constraint_table_dt: freq : %u kHz - dm->c.freq_table[index].constraint_freq : %u kHz- minhker98dt\n",freq,dm->c.freq_table[index].constraint_freq);//hope
+		//pr_info("constraint_table_dt: freq : %u kHz - dm->c.freq_table[index].constraint_freq : %u kHz- minhker98dt\n",freq,dm->c.freq_table[index].constraint_freq);//hope
 
 	}
 
@@ -1183,11 +1188,11 @@ static __init int init_domain(struct exynos_cpufreq_domain *domain,
 	domain->boot_freq = cal_dfs_get_boot_freq(domain->cal_id);
 	domain->resume_freq = cal_dfs_get_resume_freq(domain->cal_id);
 	if (domain->id == 0) {
-		domain->boot_freq=domain->max_freq = 1690000; //2002 1898 1794 1690...449 343 208
-		domain->min_freq = 208000;//2002 1898 1794 1690...449 343 208
+		domain->boot_freq=domain->max_freq = 1794000; //2002 1898 1794 1690...449 343 208
+		domain->min_freq = 546000;//2002 1898 1794 1690...449 343 208
 	} else if (domain->id == 1) {
-		domain->boot_freq=domain->max_freq = 2184000; //2496 2392 2288 2184....728 520 312 208
-		domain->min_freq = 208000; //2496 2392 2288 2184....728 520 312 208
+		domain->boot_freq=domain->max_freq = 2288000; //2496 2392 2288 2184....728 520 312 208
+		domain->min_freq = 520000; //2496 2392 2288 2184....728 520 312 208
 	}
 
 	/* Initialize freq boost */

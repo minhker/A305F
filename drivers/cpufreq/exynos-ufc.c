@@ -721,10 +721,11 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 
 			if (freq == CPUFREQ_ENTRY_INVALID)
 				continue;
+
 			if(ufc->info.ctrl_type==0)
 			{
 				if(freq==2496000||freq==2392000||freq==2288000)
-					ufc->info.freq_table[index].limit_freq=1898000;
+					ufc->info.freq_table[index].limit_freq=1794000;
 				if(freq==2184000)
 					ufc->info.freq_table[index].limit_freq=1794000;
 				if(freq==2080000||freq==1976000)
@@ -740,7 +741,7 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 			}
 			if(ufc->info.ctrl_type==2){
 				if(freq==2496000||freq==2392000||freq==2288000)
-					ufc->info.freq_table[index].limit_freq=1898000;
+					ufc->info.freq_table[index].limit_freq=1794000;
 				if(freq==2184000)
 					ufc->info.freq_table[index].limit_freq=1794000;
 				if(freq==2080000||freq==1976000)
@@ -768,6 +769,7 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 				if(freq==208000)
 					ufc->info.freq_table[index].limit_freq=546000;
 			}
+
 			for (c_index = 0; c_index < size / 2; c_index++) {
 				
 				if (freq <= table[c_index].master_freq)
@@ -776,6 +778,7 @@ static int __init init_ufc_table_dt(struct exynos_cpufreq_domain *domain,
 					break;
 				//pr_info("Master_freq : %u kHz - table[c_index].limit_freq : %u kHz  minhker98dt\n",table[c_index].master_freq,table[c_index].limit_freq);	
 			}
+
 			if(ufc->info.ctrl_type==0)
 			{
 				if(freq==2496000||freq==2392000||freq==2288000)

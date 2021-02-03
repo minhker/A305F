@@ -13,7 +13,6 @@
 
 #define FVMAP_SIZE		(SZ_8K)
 #define STEP_UV			(6250)
-#define step			(6250)
 void __iomem *fvmap_base;
 void __iomem *sram_fvmap_base;
 
@@ -212,27 +211,49 @@ int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 	fvmap_header = fvmap_base;
 	fv_table = fvmap_base + fvmap_header[idx].o_ratevolt;
 	num_of_lv = fvmap_header[idx].num_of_lv;
-
+	int minhker;
 	for (i = 0; i < num_of_lv; i++)
 	{	if(num_of_lv==18){
-			if(fv_table->table[0].volt==1000000)//2002 not work
-				fv_table->table[0].volt=1193750;
-			if(fv_table->table[1].volt==1000000)//1898
-				fv_table->table[1].volt=1193750;
-			if(fv_table->table[2].volt==1000000)//1794
-				fv_table->table[2].volt=1043750;
-			//if(fv_table->table[3].volt==1000000)
-				//fv_table->table[3].volt=1043750;
+			//	for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1168750;
+				fv_table->table[1].volt=1131250;
+				fv_table->table[2].volt=1043750; //1794
+				fv_table->table[3].volt=1031250;
+				fv_table->table[15].volt=593750;
+				fv_table->table[16].volt=587500;
+				//fv_table->table[16].volt=581250‬;
 		}
 		if(num_of_lv==17){
-			if(fv_table->table[0].volt==2496000)
-				fv_table->table[0].volt=1300000;//1143750
-			if(fv_table->table[1].volt==2392000)//not work
-				fv_table->table[1].volt=1300000;//1143750
+				//for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1262500;//1143750
+				fv_table->table[1].volt=1262500;//1143750 2392
+				fv_table->table[2].volt=1193750;//1143750 //2288
+				fv_table->table[3].volt=1143750;//2184
+				//fv_table->table[15].volt=600000;//
+				//fv_table->table[16].volt=593750;//
+		}
+		if(num_of_lv==9){
+				fv_table->table[0].volt=1106250; //1300
+				fv_table->table[5].volt=650000;
+				fv_table->table[6].volt=612500;
+				fv_table->table[7].volt=600000;
+				fv_table->table[8].volt=587500;//
+		}
+		if(num_of_lv==10){
+			//	fv_table->table[5].volt=650000;//1001
+				//fv_table->table[6].volt=612500;
+				//fv_table->table[7].volt=600000;
+				//fv_table->table[8].volt=587500;
 		}
 		table[i] = fv_table->table[i].volt;
-		pr_info("  num_of_lv : %u, table[i].volt : %u,Minhker98voltage_table\n",
-				fv_table->table[i].volt,num_of_lv);
+		//pr_info("  num_of_lv : %u, table[i].volt : %u,Minhker98voltage_table\n",
+				//fv_table->table[i].volt,num_of_lv);
 	}
 	return num_of_lv;
 
@@ -253,8 +274,46 @@ int fvmap_get_raw_voltage_table(unsigned int id)
 	num_of_lv = fvmap_header[idx].num_of_lv;
 
 	for (i = 0; i < num_of_lv; i++)
+{if(num_of_lv==18){
+			//	for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1168750;
+				fv_table->table[1].volt=1131250;
+				fv_table->table[2].volt=1043750; //1794
+				fv_table->table[3].volt=1031250;
+				fv_table->table[15].volt=593750;
+				fv_table->table[16].volt=587500;
+				//fv_table->table[16].volt=581250‬;
+		}
+		if(num_of_lv==17){
+				//for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1262500;//1143750
+				fv_table->table[1].volt=1262500;//1143750 2392
+				fv_table->table[2].volt=1193750;//1143750 //2288
+				fv_table->table[3].volt=1143750;//2184
+				fv_table->table[15].volt=600000;//
+				fv_table->table[16].volt=593750;//
+		}
+		if(num_of_lv==9){
+				fv_table->table[0].volt=1106250; //1300
+				fv_table->table[5].volt=650000;
+				fv_table->table[6].volt=612500;
+				fv_table->table[7].volt=600000;
+				fv_table->table[8].volt=587500;//
+		}
+		if(num_of_lv==10){
+			//	fv_table->table[5].volt=650000;//1001
+				//fv_table->table[6].volt=612500;
+				//fv_table->table[7].volt=600000;
+				//fv_table->table[8].volt=587500;
+		}
 		table[i] = fv_table->table[i].volt;
-
+}
 	for (i = 0; i < num_of_lv; i++)
 		printk("dvfs id : %d  %d Khz : %d uv\n", ACPM_VCLK_TYPE | id, fv_table->table[i].rate, table[i]);
 

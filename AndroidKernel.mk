@@ -6,38 +6,10 @@ endif
 
 ifeq ($(KERNEL_DEFCONFIG), universal7885_FHD_P_Treble_defconfig)
 TARGET_KERNEL_DTB := exynos7885-universal7885_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7905_FHD_P_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7905-universal7905_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7905_P_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7905-universal7905_P_Treble.dtb
 else ifeq ($(KERNEL_DEFCONFIG), universal7904_FHD_P_Treble_defconfig)
 TARGET_KERNEL_DTB := exynos7904-universal7904_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7904_P_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7904-universal7904_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7884_P_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7884-universal7884_P_Treble.dtb
 else ifeq ($(KERNEL_DEFCONFIG), universal7884_FHD_P_Treble_defconfig)
 TARGET_KERNEL_DTB := exynos7884-universal7884_FHD_P_Treble.dts
-else ifeq ($(KERNEL_DEFCONFIG), universal7884B_P_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7884b-universal7884b_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7884B_FHD_P_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7884b-universal7884b_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7885_FHD_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7885-universal7885_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7885_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7885-universal7885_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7905_FHD_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7905-universal7905_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7905_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7905-universal7905_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7904_FHD_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7904-universal7904_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7904_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7904-universal7904_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7884B_FHD_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7884b-universal7884b_FHD_P_Treble.dtb
-else ifeq ($(KERNEL_DEFCONFIG), universal7884B_Q_MR_Treble_defconfig)
-TARGET_KERNEL_DTB := exynos7884b-universal7884b_P_Treble.dtb
 else
 TARGET_KERNEL_DTB := exynos7885-universal7885_P_Treble.dtb
 endif

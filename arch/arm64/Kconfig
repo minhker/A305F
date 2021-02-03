@@ -227,7 +227,7 @@ source "init/Kconfig"
 source "kernel/Kconfig.freezer"
 
 source "arch/arm64/Kconfig.platforms"
-
+source "arch/arm64/mach-exynos/Kconfig"
 menu "Bus support"
 
 config PCI
@@ -1126,6 +1126,13 @@ config DMI
 	  However, even with this option, the resultant kernel should
 	  continue to boot on existing non-UEFI platforms.
 
+config CONFIG_EXYNOS7885_A30_MK
+	bool "Build Dtbo for SM-A305"
+	depends on SOC_EXYNOS7885
+	default n
+	help
+	buil dtbo for Galaxy A30.
+
 config TIMA
 	bool "Enable TIMA(Trustzone based Integrity Measurement Archtecture feature"
 	default n
@@ -1304,6 +1311,7 @@ source "fs/Kconfig"
 source "arch/arm64/kvm/Kconfig"
 
 source "arch/arm64/Kconfig.debug"
+
 
 source "security/Kconfig"
 
