@@ -22,6 +22,7 @@ Mk_CC=/home/m/kernel/toolchain/clang/host/linux-x86/clang-4639204/bin/clang
 
 MK_KERNEL=$MK_DIR/arch/arm64/boot/Image
 MK_DTBO=$MK_DIR/arch/arm64/boot/dtbo.img
+MK_DTB=$MK_DIR/arch/arm64/boot/dt.img
 # Kernel Name and Version
 MK_VERSION=V14.8_Pro
 MK_NAME=MinhKer_Q
@@ -204,8 +205,8 @@ echo "$MK_VARIANT kernel build and coppy finished."
             BUILD_ZIMAGE
 	    cp $MK_KERNEL /home/m/share/KERNEL/MinhKer_kernel_Q_a30_v14.8_Pro/Image
 	    cp $MK_DTBO /home/m/share/KERNEL/MinhKer_kernel_Q_a30_v14.8_Pro/dtbo.img
-		cp /arch/arm64/boot/dts/exynos/dtbo/exynos7885.dtb /home/m/kernel/try_build_dtb_dtbo/exynos7885.dtb
-		echo "$MK_VARIANT kernel build and coppy finished."
+	    cp $MK_DTB /home/m/share/KERNEL/MinhKer_kernel_Q_a30_v14.8_Pro/dtb.img
+		echo "$MK_VARIANT kernel dtbo dtb build and coppy finished."
 	    break
             ;;
 	"build_all")

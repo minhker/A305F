@@ -314,8 +314,9 @@ static int exynos7885_devfreq_mif_init_freq_table(struct exynos_devfreq_data *da
 	dev_info(data->dev, "current frequency: %uKhz\n", cur_freq);
 
 	for (i = 0; i < data->max_state; i++) {
-		if (data->opp_list[i].freq > data->max_freq ||
-			data->opp_list[i].freq < data->min_freq)
+		if (data->opp_list[i].freq > data->max_freq)
+			data->max_freq=data->opp_list[i].freq;
+		if (data->opp_list[i].freq < data->min_freq)
 			dev_pm_opp_disable(data->dev, (unsigned long)data->opp_list[i].freq);
 	}
 

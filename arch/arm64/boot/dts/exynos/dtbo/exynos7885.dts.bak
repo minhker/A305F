@@ -422,7 +422,7 @@
 		use_delay_time = "true";
 		delay_time_list = "20";
 
-		freq_info = <1794000 845000 546000 546000 1794000 845000>;
+		freq_info = <2093000 845000 676000 676000 2093000 845000>;
 		/* initial_freq, default_qos, suspend_freq, min_freq, max_freq reboot_freq */
 
 		/* Booting value */

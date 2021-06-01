@@ -16,7 +16,7 @@
 
 include $(srctree)/arch/arm64/boot/dts/Makefile
 
-targets := Image Image.gz dtbo.img
+targets := Image Image.gz dtbo.img dt.img
 
 DTB_NAMES := $(subst $\",,$(CONFIG_BUILD_ARM64_APPENDED_DTB_IMAGE_NAMES))
 ifneq ($(DTB_NAMES),)
@@ -26,6 +26,7 @@ DTB_LIST := $(dtb-y) $(dtbo-y)
 endif
 DTB_OBJS := $(addprefix $(obj)/dts/,$(DTB_LIST))
 DTBO_OBJS := $(shell find $(obj)/dts/ -name \*.dtbo)
+DT_OBJS := $(shell find $(obj)/dts/ -name \*.dtb)
 $(obj)/Image: vmlinux FORCE
 	$(call if_changed,objcopy)
 
@@ -51,6 +52,9 @@ $(obj)/Image.gz-dtb: $(obj)/Image.gz $(DTB_OBJS) FORCE
 	$(call if_changed,cat)
 
 $(obj)/dtbo.img: $(DTBO_OBJS) FORCE
+	$(call if_changed,mkdtimg)
+
+$(obj)/dt.img: $(DT_OBJS) FORCE
 	$(call if_changed,mkdtimg)
 
 install: $(obj)/Image
