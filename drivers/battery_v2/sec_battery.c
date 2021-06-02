@@ -484,14 +484,14 @@ static void sec_bat_get_charging_current_by_siop(struct sec_battery_info *batter
 		int max_charging_current;
 
 		if (is_wireless_type(battery->cable_type)) {
-			max_charging_current = 1500; //1000 /* 1 step(70) */
+			max_charging_current = 1000; /* 1 step(70) */
 			if (battery->siop_level == 0) { /* 3 step(0) */
 				max_charging_current = 0;
 			} else if (battery->siop_level <= 10) { /* 2 step(10) */
-				max_charging_current = 1000; //
+				max_charging_current = 500;
 			}
 		} else {
-			max_charging_current = 2600; //1800 /* 1 step(70) */
+			max_charging_current = 1800; /* 1 step(70) */
 
 			/* if siop level is 0, set minimum charging current from dt */
 			if (battery->siop_level == 0 &&
@@ -4943,7 +4943,7 @@ ssize_t sec_bat_show_attrs(struct device *dev,
 					POWER_SUPPLY_EXT_PROP_INBAT_VOLTAGE_FGSRC_SWITCHING, value);
 
 			for (j = 0; j < 5; j++) {
-				mdelay(200);
+				msleep(200);
 				psy_do_property(battery->pdata->fuelgauge_name, get,
 					POWER_SUPPLY_PROP_VOLTAGE_NOW, value);
 				ocv_data[j] = value.intval;
@@ -8663,7 +8663,7 @@ static int sec_bat_parse_dt(struct device *dev,
 	pr_info("%s : TOPOFF_1ST(%d), TOPOFF_2ND(%d)\n",
 		__func__, pdata->full_check_current_1st, pdata->full_check_current_2nd);
 #ifdef CONFIG_SEC_FACTORY
-	pdata->charging_current[SEC_BATTERY_CABLE_TA].fast_charging_current = 1700;
+	pdata->charging_current[SEC_BATTERY_CABLE_TA].fast_charging_current = 1500;
 #endif
 
 	pdata->default_usb_output_current = pdata->charging_current[SEC_BATTERY_CABLE_USB].fast_charging_current;
@@ -8731,7 +8731,7 @@ static int sec_bat_parse_dt(struct device *dev,
 				"battery,standard_curr", &pdata->standard_curr);
 	if (ret) {
 		pr_info("standard_curr is empty\n");
-		pdata->standard_curr = 2550; //2150
+		pdata->standard_curr = 2150;
 	}
 
 	ret = of_property_read_string(np,
@@ -10813,3 +10813,4 @@ module_exit(sec_battery_exit);
 MODULE_DESCRIPTION("Samsung Battery Driver");
 MODULE_AUTHOR("Samsung Electronics");
 MODULE_LICENSE("GPL");
+
