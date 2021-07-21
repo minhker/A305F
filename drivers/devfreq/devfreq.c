@@ -710,7 +710,7 @@ struct devfreq *devm_devfreq_add_device(struct device *dev,
 	devfreq = devfreq_add_device(dev, profile, governor_name, data);
 	if (IS_ERR(devfreq)) {
 		devres_free(ptr);
-		return ERR_PTR(-ENOMEM);
+		return devfreq;
 	}
 
 	*ptr = devfreq;
@@ -1039,7 +1039,6 @@ static ssize_t available_frequencies_show(struct device *d,
 					  struct device_attribute *attr,
 					  char *buf)
 {
-	
 	struct devfreq *df = to_devfreq(d);
 	struct device *dev = df->dev.parent;
 	struct dev_pm_opp *opp;
@@ -1067,54 +1066,7 @@ static ssize_t available_frequencies_show(struct device *d,
 	return count;
 }
 static DEVICE_ATTR_RO(available_frequencies);
-static ssize_t volt_show(struct device *d,
-					  struct device_attribute *attr,
-					  char *buf)
-{
-	struct exynos_devfreq_data *data;
-	struct devfreq *df = to_devfreq(d);
-	struct device *dev = df->dev.parent;
-	struct dev_pm_opp *opp;
-	u32 volt2;
-	ssize_t count = 0;
-	unsigned long freq = 0;
-	int i=0;
-	rcu_read_lock();
-/*
-	for (i = 0; i < data->max_state; i++) {
-		freq = data->opp_list[i].freq;
-		volt = data->opp_list[i].volt;
-		
-		data->devfreq_profile.freq_table[i] = freq;
 
-		ret = dev_pm_opp_add(data->dev, freq, volt);
-		if (ret) {
-			dev_err(data->dev, "failed to add opp entries %uKhz\n", freq);
-			return ret;
-		} else {
-			dev_info(data->dev, "DEVFREQ : %8uKhz, %8uuV\n", freq, volt);
-		}*/
-	do {
-		volt2 = data->opp_list[i].volt;
-		opp = dev_pm_opp_find_freq_ceil(dev, &freq);
-		if (IS_ERR(opp))
-			break;
-
-		count += scnprintf(&buf[count], (PAGE_SIZE - count - 2),
-				   "%lu %d\n", freq,volt2);
-		freq++;i++;
-	} while (1);
-	rcu_read_unlock();
-
-	/* Truncate the trailing space */
-	if (count)
-		count--;
-
-	count += sprintf(&buf[count], "\n");
-
-	return count;
-}
-static DEVICE_ATTR_RO(volt);
 static ssize_t trans_stat_show(struct device *dev,
 			       struct device_attribute *attr, char *buf)
 {
@@ -1193,7 +1145,6 @@ static struct attribute *devfreq_attrs[] = {
 	&dev_attr_max_freq.attr,
 	&dev_attr_trans_stat.attr,
 	&dev_attr_time_in_state.attr,
-	&dev_attr_volt.attr,
 	NULL,
 };
 ATTRIBUTE_GROUPS(devfreq);

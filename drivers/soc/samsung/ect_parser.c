@@ -518,7 +518,7 @@ err_domain_list_allocation:
 	kfree(ect_rcc_header);
 	return ret;
 }
-/*
+
 static int ect_parse_mif_thermal_header(void *address, struct ect_info *info)
 {
 	struct ect_mif_thermal_header *ect_mif_thermal_header;
@@ -540,7 +540,7 @@ static int ect_parse_mif_thermal_header(void *address, struct ect_info *info)
 
 	return 0;
 }
-*/
+
 static int ect_parse_ap_thermal_function(int parser_version, void *address, struct ect_ap_thermal_function *function)
 {
 	int i;
@@ -564,23 +564,25 @@ static int ect_parse_ap_thermal_function(int parser_version, void *address, stru
 		if(range->lower_bound_temperature==81&&range->max_frequency==1768000)
 			range->max_frequency=2080000;
 		if(range->lower_bound_temperature==86&&range->max_frequency==1560000)
-			range->max_frequency=1976000;
-		if(range->lower_bound_temperature==91&&range->max_frequency==728000)
 			range->max_frequency=1872000;
+		if(range->lower_bound_temperature==91&&range->max_frequency==728000)
+			range->max_frequency=1768000;
 		//for litte
 		if(range->lower_bound_temperature==20&&range->max_frequency==1690000)
-			range->max_frequency=1794000;
+			range->max_frequency=1794000; //
 		if(range->lower_bound_temperature==76&&range->max_frequency==1690000)
 			range->max_frequency=1690000;
 		if(range->lower_bound_temperature==81&&range->max_frequency==1690000)
 			range->max_frequency=1586000;
+		if(range->lower_bound_temperature==86&&range->max_frequency==1586000)
+			range->max_frequency=1482000;
 		//for gpu
 		if(range->lower_bound_temperature==20&&range->max_frequency==1100000)
 			range->max_frequency=1300000;
 		if(range->lower_bound_temperature==76&&range->max_frequency==1100000)
 			range->max_frequency=1200000;
 		if(range->lower_bound_temperature==81&&range->max_frequency==1100000)
-			range->max_frequency=1200000;
+			range->max_frequency=1100000;
 		ect_parse_integer(&address, &range->sw_trip);
 		ect_parse_integer(&address, &range->flag);
 	}
@@ -1114,7 +1116,7 @@ static int ect_dump_dvfs(struct seq_file *s, void *data);
 static int ect_dump_pll(struct seq_file *s, void *data);
 static int ect_dump_voltage(struct seq_file *s, void *data);
 static int ect_dump_rcc(struct seq_file *s, void *data);
-//static int ect_dump_mif_thermal(struct seq_file *s, void *data);
+static int ect_dump_mif_thermal(struct seq_file *s, void *data);
 static int ect_dump_ap_thermal(struct seq_file *s, void *data);
 static int ect_dump_margin(struct seq_file *s, void *data);
 static int ect_dump_timing_parameter(struct seq_file *s, void *data);
@@ -1132,7 +1134,7 @@ static int dump_open(struct inode *inode, struct file *file);
 #define ect_dump_voltage		NULL
 #define ect_dump_dvfs			NULL
 #define ect_dump_margin			NULL
-//#define ect_dump_mif_thermal		NULL
+#define ect_dump_mif_thermal		NULL
 #define ect_dump_pll			NULL
 #define ect_dump_rcc			NULL
 #define ect_dump_timing_parameter	NULL
@@ -1216,7 +1218,7 @@ static struct ect_info ect_list[] = {
 		.dump_node_name = SYSFS_NODE_MARGIN,
 		.block_handle = NULL,
 		.block_precedence = -1,
-	},/* {
+	}, {
 		.block_name = BLOCK_MIF_THERMAL,
 		.block_name_length = sizeof(BLOCK_MIF_THERMAL) - 1,
 		.parser = ect_parse_mif_thermal_header,
@@ -1230,7 +1232,7 @@ static struct ect_info ect_list[] = {
 		.dump_node_name = SYSFS_NODE_MIF_THERMAL,
 		.block_handle = NULL,
 		.block_precedence = -1,
-	}, */{
+	}, {
 		.block_name = BLOCK_PLL,
 		.block_name_length = sizeof(BLOCK_PLL) - 1,
 		.parser = ect_parse_pll_header,
@@ -1478,25 +1480,12 @@ static int ect_dump_pll(struct seq_file *s, void *data)
 
 		for (j = 0; j < pll->num_of_frequency; ++j) {
 			frequency = &pll->frequency_list[j];
-			if(frequency->frequency==2288000)
-			{
-				//M*26/(P*2^S)=freq
-				frequency->frequency=2262000;
-				frequency->p=3;
-				frequency->m=261;
-			}
+
 			seq_printf(s, "\t\t\t[FREQUENCY] : %u\n", frequency->frequency);
 			seq_printf(s, "\t\t\t[P] : %d\n", frequency->p);
 			seq_printf(s, "\t\t\t[M] : %d\n", frequency->m);
 			seq_printf(s, "\t\t\t[S] : %d\n", frequency->s);
 			seq_printf(s, "\t\t\t[K] : %d\n", frequency->k);
-			if(frequency->frequency==2392000){
-				//M*26/(P*2^S)=freq
-				frequency->frequency=2314000;
-				//pll->frequency_list[j]=2314000;
-				frequency->p=3;
-				frequency->m=267;
-			}
 		}
 	}
 
@@ -1622,7 +1611,7 @@ static int ect_dump_rcc(struct seq_file *s, void *data)
 
 	return 0;
 }
-/*
+
 static int ect_dump_mif_thermal(struct seq_file *s, void *data)
 {
 	int i;
@@ -1646,22 +1635,18 @@ static int ect_dump_mif_thermal(struct seq_file *s, void *data)
 
 	for (i = 0; i < ect_mif_thermal_header->num_of_level; ++i) {
 		level = &ect_mif_thermal_header->level[i];
-		if(level->max_frequency==1794000)
-			level->max_frequency=2093000;
+
 		seq_printf(s, "\t\t[MR4 LEVEL] : %d\n", level->mr4_level);
 		seq_printf(s, "\t\t[MAX FREQUENCY] : %u\n", level->max_frequency);
-		if(level->max_frequency==1794000)
-			level->max_frequency=2093000;
 		seq_printf(s, "\t\t[MIN FREQUENCY] : %u\n", level->min_frequency);
 		seq_printf(s, "\t\t[REFRESH RATE] : %u\n", level->refresh_rate_value);
 		seq_printf(s, "\t\t[POLLING PERIOD] : %u\n", level->polling_period);
 		seq_printf(s, "\t\t[SW TRIP] : %u\n", level->sw_trip);
-		pr_info("MR4 LEVEL : %u kHz - MAX FREQUENCY : %u kHz MIN FREQUENCY : %u kHz- REFRESH RATE :%u POLLING PERIOD:%u SW TRIP:%u minhker98\n",level->mr4_level,level->max_frequency,level->min_frequency,level->refresh_rate_value,level->polling_period,level->sw_trip);//hope
 	}
 
 	return 0;
 }
-*/
+
 static int ect_dump_ap_thermal(struct seq_file *s, void *data)
 {
 	int i, j;
@@ -1692,9 +1677,10 @@ static int ect_dump_ap_thermal(struct seq_file *s, void *data)
 
 		for (j = 0; j < function->num_of_range; ++j) {
 			range = &function->range_list[j];
-			seq_printf(s, "\t\t\t[MAX FREQUENCY] : %u\n", range->max_frequency);
+
 			seq_printf(s, "\t\t\t[LOWER BOUND TEMPERATURE] : %u\n", range->lower_bound_temperature);
 			seq_printf(s, "\t\t\t[UPPER BOUND TEMPERATURE] : %u\n", range->upper_bound_temperature);
+			seq_printf(s, "\t\t\t[MAX FREQUENCY] : %u\n", range->max_frequency);
 			seq_printf(s, "\t\t\t[SW TRIP] : %u\n", range->sw_trip);
 			seq_printf(s, "\t\t\t[FLAG] : %u\n", range->flag);
 		}
@@ -1820,54 +1806,50 @@ static int ect_dump_minlock(struct seq_file *s, void *data)
 			//for big
 			if (i==0){
 			if(domain->level[j].main_frequencies==1768000)
-				domain->level[j].sub_frequencies=533000; //333
-			//if(domain->level[j].main_frequencies==1560000)
-				//domain->level[j].sub_frequencies=267000; //267
+				domain->level[j].sub_frequencies=533000; 
+			/*if(domain->level[j].main_frequencies==1664000)
+				domain->level[j].sub_frequencies=333000; 
+			if(domain->level[j].main_frequencies==1560000) 
+				domain->level[j].sub_frequencies=267000;
 			if(domain->level[j].main_frequencies==1352000) 
-				domain->level[j].sub_frequencies=133000; //107
-			//if(domain->level[j].main_frequencies==1144000) 
-			//	domain->level[j].sub_frequencies=133000; //107
+				domain->level[j].sub_frequencies=107000; */
 			}
 			//for litte
-			if (i==1){
+			//if (i==1){
 		//	if(domain->level[j].main_frequencies==1352000) 
 			//	domain->level[j].sub_frequencies=333000; //267
-			if(domain->level[j].main_frequencies==1248000)
-				domain->level[j].sub_frequencies=133000; //107
+			//if(domain->level[j].main_frequencies==1248000)
+			//	domain->level[j].sub_frequencies=107000; //107
 			//if(domain->level[j].main_frequencies==1144000) 
 			//	domain->level[j].sub_frequencies=133000; //107
-			}
+			//}
 			//for gpu
 			if (i==2){
-			//if(domain->level[j].main_frequencies==1001000)
-			//	domain->level[j].sub_frequencies=533000; //333
+			if(domain->level[j].main_frequencies==1001000)
+				domain->level[j].sub_frequencies=533000; //333
 			if(domain->level[j].main_frequencies==845000) 
 				domain->level[j].sub_frequencies=333000;//107
 			if(domain->level[j].main_frequencies==676000) 
 				domain->level[j].sub_frequencies=267000;//107
 			if(domain->level[j].main_frequencies==545000)
-				domain->level[j].sub_frequencies=133000;//107
-			//if(domain->level[j].main_frequencies==450000)
-				//domain->level[j].sub_frequencies=133000;//107
+				domain->level[j].sub_frequencies=107000;//107
+			if(domain->level[j].main_frequencies==450000)
+				domain->level[j].sub_frequencies=107000;//107
+			if(domain->level[j].main_frequencies==343000)
+				domain->level[j].sub_frequencies=107000;//107
 			}
 			//for mif
 			if (i==3){
 			if(domain->level[j].main_frequencies==2093000||domain->level[j].main_frequencies==2002000||domain->level[j].main_frequencies==1794000) //same
 				domain->level[j].sub_frequencies=533000;//533
-			//if(domain->level[j].main_frequencies==1539000) 
-			//	domain->level[j].sub_frequencies=333000;//333
 			if(domain->level[j].main_frequencies==1352000) 
 				domain->level[j].sub_frequencies=267000; //107
-			if(domain->level[j].main_frequencies==1014000) 
-				domain->level[j].sub_frequencies=133000; //107
-			//if(domain->level[j].main_frequencies==845000) 
-			//	domain->level[j].sub_frequencies=133000; //107
 			}
 			seq_printf(s, "\t\t\t[Frequency] : (MAIN)%u, (SUB)%u\n",
 					domain->level[j].main_frequencies,
 					domain->level[j].sub_frequencies);
-			pr_info("Frequency : %u kHz - SUB : %u kHz minhker98dt\n",
-					domain->level[j].main_frequencies,domain->level[j].sub_frequencies);
+			//pr_info("Frequency : %u kHz - SUB : %u kHz minhker98dt\n",
+			//		domain->level[j].main_frequencies,domain->level[j].sub_frequencies);
 		}
 	}
 
@@ -1906,9 +1888,6 @@ static int ect_dump_gen_parameter(struct seq_file *s, void *data)
 		for (j = 0; j < table->num_of_row; ++j) {
 			seq_printf(s, "\t\t\t");
 			for (k = 0; k < table->num_of_col; ++k) {
-				//if(j * table->num_of_col + k==2184000)  //test
-				//	seq_printf(s, "%u ", table->parameter[2288000]);
-				//else
 				seq_printf(s, "%u ", table->parameter[j * table->num_of_col + k]);
 			}
 			seq_printf(s, "\n");
@@ -2257,7 +2236,7 @@ struct ect_rcc_domain *ect_rcc_get_domain(void *block, char *domain_name)
 
 	return NULL;
 }
-/*
+
 struct ect_mif_thermal_level *ect_mif_thermal_get_level(void *block, int mr4_level)
 {
 	int i;
@@ -2278,7 +2257,7 @@ struct ect_mif_thermal_level *ect_mif_thermal_get_level(void *block, int mr4_lev
 
 	return NULL;
 }
-*/
+
 struct ect_ap_thermal_function *ect_ap_thermal_get_function(void *block, char *function_name)
 {
 	int i;

@@ -726,7 +726,8 @@ static int sens_destroy(void *key, void *datum, void *p)
 	kfree(key);
 	if (datum) {
 		levdatum = datum;
-		ebitmap_destroy(&levdatum->level->cat);
+		if (levdatum->level)
+			ebitmap_destroy(&levdatum->level->cat);
 		kfree(levdatum->level);
 	}
 	kfree(datum);
@@ -1505,9 +1506,9 @@ static int type_read(struct policydb *p, struct hashtab *h, void *fp)
 	return 0;
 bad:
 // [ SEC_SELINUX_PORTING_COMMON
-#ifndef CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE
+#ifndef CONFIG_ALWAYS_ENFORCE
 	panic("SELinux:Failed to type read");
-#endif /*CONFIG_SECURITY_SELINUX_ALWAYS_ENFORCE*/
+#endif /*CONFIG_ALWAYS_ENFORCE*/
 // ] SEC_SELINUX_PORTING_COMMON
 	type_destroy(key, typdatum, NULL);
 	return rc;

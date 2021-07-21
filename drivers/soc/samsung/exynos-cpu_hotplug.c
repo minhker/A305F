@@ -135,7 +135,6 @@ bool exynos_cpu_hotplug_enabled(void)
  * minimum online CPU on the assumption that minimum online CPU is not greater
  * than maximum online CPU. If mininum is greater than maximum, online CPU will
  * be maximum.
-Nếu ai đó yêu cầu hotplug CPU, trình điều khiển hotplug tạo cpumask với CPU trực tuyến tối thiểu và tối đa trong PM QoS. Số lượng CPU trực tuyến sẽ giống như CPU ​​trực tuyến tối thiểu với giả định rằng CPU trực tuyến tối thiểu không lớn hơn CPU trực tuyến tối đa. Nếu tối thiểu lớn hơn tối đa, CPU trực tuyến sẽ tối đa.
  */
 static struct cpumask create_cpumask(void)
 {
@@ -172,7 +171,6 @@ static struct cpumask create_cpumask(void)
  * do_cpu_hotplug() is the main function for cpu hotplug. Only this function
  * enables or disables cpus, so all APIs in this driver call do_cpu_hotplug()
  * eventually.
-do_cpu_hotplug () là chức năng chính cho hotplug cpu. Chỉ chức năng này mới cho phép hoặc vô hiệu hóa cpus, vì vậy cuối cùng tất cả các API trong trình điều khiển này đều gọi do_cpu_hotplug ().
  */
 static int do_cpu_hotplug(bool fast_hotplug)
 {
@@ -213,7 +211,6 @@ static int do_cpu_hotplug(bool fast_hotplug)
 #ifdef CONFIG_SCHED_HMP
 	/*
 	 * HACK: fast-hotplug does not support disabling all big cpus.
-	 fasthotplug không hỗ trợ vô hiệu hóa tất cả các cpus lớn.
 	 */
 	if (fast_hotplug) {
 		struct cpumask temp;
@@ -251,8 +248,7 @@ static int do_cpu_hotplug(bool fast_hotplug)
 		ret = func_cpu_down(&disable_cpus);
 
 out:
-	/* If it fails to complete cpu hotplug request, retries after 100ms
-		 Nếu không hoàn thành yêu cầu cắm nóng cpu, hãy thử lại sau 100ms */
+	/* If it fails to complete cpu hotplug request, retries after 100ms */
 	if (ret)
 		queue_delayed_work(cpu_hotplug.workqueue, &cpu_hotplug.delayed_work,
 							msecs_to_jiffies(100));
@@ -285,16 +281,12 @@ static int control_cpu_hotplug(bool enable)
 		/*
 		 * If it success to enable all CPUs, clear cpu_hotplug.enabled flag.
 		 * Since then all hotplug requests are ignored.
-
-		Nếu thành công để kích hoạt tất cả các CPU, hãy xóa cờ cpu_hotplug.enables. Kể từ đó, tất cả các yêu cầu cắm nóng được bỏ qua.
 		 */
 		ret = cpu_hotplug_in(&mask);
 		if (!ret) {
 			/*
 			 * In this position, can't use update_enable_flag()
 			 * because already taken cpu_hotplug.lock
-
-Ở vị trí này, không thể sử dụng update_enable_flag () vì đã lấy cpu_hotplug.lock
 			 */
 			cpu_hotplug.enabled = false;
 		} else {
@@ -332,87 +324,6 @@ static struct notifier_block cpu_hotplug_qos_notifier = {
  */
 struct pm_qos_request user_min_cpu_hotplug_request;
 struct pm_qos_request user_max_cpu_hotplug_request;
-
-/*
- * User can change the number of online cpu by using control_online_cpus
- * sysfs node. User input minimum and maxinum online cpu to this node as
- * below:
- *
- * #echo  max > /sys/power/cpuhotplug/control_online_cpus
- */
-struct pm_qos_request user_min_cpu_hotplug_request;
-struct pm_qos_request user_max_cpu_hotplug_request;
-
-static ssize_t show_control_min_online_cpus(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	ssize_t count = 0;
-
-	count += snprintf(&buf[count], 40, "%u\n",pm_qos_request(PM_QOS_CPU_ONLINE_MIN));
-
-	return count;
-}
-
-static ssize_t store_control_min_online_cpus(struct kobject *kobj,
-		struct kobj_attribute *attr, const char *buf,
-		size_t count)
-{
-	int min;
-
-	if (!sscanf(buf, " %1d", &min))
-		return -EINVAL;
-
-	/*
-	 * "min" and "max" has the number of online cpus,
-	 * so it must be bigger than 0.
-	 */
-	if ( min <= 0)
-		return -EINVAL;
-
-	pm_qos_update_request(&user_min_cpu_hotplug_request, min);
-
-	return count;
-}
-
-static struct kobj_attribute control_min_online_cpus =
-__ATTR(control_min_online_cpus, 0644, show_control_min_online_cpus, store_control_min_online_cpus);
-
-
-
-static ssize_t show_control_max_online_cpus(struct kobject *kobj,
-		struct kobj_attribute *attr, char *buf)
-{
-	ssize_t count = 0;
-
-	count += snprintf(&buf[count], 40, "%u\n",pm_qos_request(PM_QOS_CPU_ONLINE_MAX));
-
-	return count;
-}
-
-static ssize_t store_control_max_online_cpus(struct kobject *kobj,
-		struct kobj_attribute *attr, const char *buf,
-		size_t count)
-{
-	int max;
-
-	if (!sscanf(buf, " %1d", &max))
-		return -EINVAL;
-
-	/*
-	 * "min" and "max" has the number of online cpus,
-	 * so it must be bigger than 0.
-	 */
-	if ( max <= 0)
-		return -EINVAL;
-
-	pm_qos_update_request(&user_max_cpu_hotplug_request, max);
-
-	return count;
-}
-
-static struct kobj_attribute control_max_online_cpus =
-__ATTR(control_max_online_cpus, 0644, show_control_max_online_cpus, store_control_max_online_cpus);
-
 
 /*
  * User can change the number of online cpu by using min_online_cpu and
@@ -464,8 +375,6 @@ attr_online_cpu(max);
  *
  * If enabled become 0, hotplug driver enable the all cpus and no hotplug
  * operation happen from hotplug driver.
-
-Nếu được bật thành 0, trình điều khiển cắm nóng cho phép tất cả các cpus và không có hoạt động cắm nóng nào xảy ra từ trình điều khiển cắm nóng.
  */
 static ssize_t show_cpu_hotplug_enable(struct kobject *kobj,
 		struct kobj_attribute *attr, char *buf)
@@ -491,8 +400,6 @@ static struct kobj_attribute cpu_hotplug_enabled =
 __ATTR(enabled, 0644, show_cpu_hotplug_enable, store_cpu_hotplug_enable);
 
 static struct attribute *cpu_hotplug_attrs[] = {
-	&control_max_online_cpus.attr,
-	&control_min_online_cpus.attr,
 	&min_online_cpu.attr,
 	&max_online_cpu.attr,
 	&cpu_hotplug_enabled.attr,
@@ -553,8 +460,6 @@ static void __init cpu_hotplug_pm_qos_init(void)
 	 * If hotplug governor is not activated, nobody may be requested
 	 * PM_QOS_CPU_ONLINE_MIN, all secondary CPUs can go out. To prevent
 	 * this, it updates QoS to NR_CPUS.
-
-Nếu thống đốc hotplug không được kích hoạt, không ai có thể được yêu cầu PM_QOS_CPU_ONLINE_MIN, tất cả các CPU thứ cấp có thể bị tắt. Để ngăn chặn điều này, nó cập nhật QoS thành NR_CPUS.
 	 */
 	pm_qos_update_request_timeout(&boot_min_cpu_hotplug_request,
 			default_min, cpu_hotplug.boot_lock_time * USEC_PER_SEC);

@@ -605,7 +605,7 @@ static void __init clean_rootfs(void)
 	kfree(buf);
 }
 #endif
-
+#ifdef CONFIG_INITRAMFS_SKIP
 static int __initdata do_skip_initramfs;
 
 static int __init skip_initramfs_param(char *str)
@@ -616,21 +616,22 @@ static int __init skip_initramfs_param(char *str)
 	return 1;
 }
 __setup("skip_initramfs", skip_initramfs_param);
-
+#endif
 static int __init populate_rootfs(void)
 {
 	char *err;
-
+#ifdef CONFIG_INITRAMFS_SKIP
 	if (do_skip_initramfs) {
 		if (initrd_start)
 			free_initrd();
 		return default_rootfs();
 	}
-
+#endif
 	err = unpack_to_rootfs(__initramfs_start, __initramfs_size);
 	if (err)
 		panic("%s", err); /* Failed to decompress INTERNAL initramfs */
-	if (initrd_start) {
+	/* If available load the bootloader supplied initrd */
+	if (initrd_start && !IS_ENABLED(CONFIG_INITRAMFS_FORCE)) {
 #ifdef CONFIG_BLK_DEV_RAM
 		int fd;
 		printk(KERN_INFO "Trying to unpack rootfs image as initramfs...\n");

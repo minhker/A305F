@@ -1,0 +1,1 @@
+/home/m/kernel/a30_exynos_Q_oc/drivers/cpufreq/exynos-ufc.c

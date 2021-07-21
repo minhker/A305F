@@ -1118,8 +1118,6 @@ int gpu_cooling_table_init(struct platform_device *pdev)
 #if defined(CONFIG_SOC_EXYNOS7885_ANDROID_VERSION_P)
 		if (gpu_freq_table[count].frequency > gpu_dvfs_get_max_freq()) {
 			gpu_freq_table[count].frequency = gpu_dvfs_get_max_freq();
-			if(function->range_list[i].max_frequency<1300000)
-				function->range_list[i].max_frequency=1300000;
 			dev_info(&pdev->dev, "[GPU TMU] max freq %d->%d\n",
 				function->range_list[i].max_frequency, gpu_dvfs_get_max_freq());
 		}

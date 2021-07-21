@@ -98,12 +98,12 @@ static ssize_t show_exynos_devfreq_info(struct device *dev,
 			  "OPP list length  : %20u\n", data->max_state);
 	count += snprintf(buf + count, PAGE_SIZE, "freq opp table\n");
 	count += snprintf(buf + count, PAGE_SIZE, "\t  idx      freq       volt\n");
-if( data->max_freq==1794000)
-					 data->max_freq=2002000;
+
 	for (i = 0; i < data->max_state; i++)
 		count += snprintf(buf + count, PAGE_SIZE, "\t%5u %10u %10u\n",
 				  data->opp_list[i].idx, data->opp_list[i].freq,
 				  data->opp_list[i].volt);
+
 	count += snprintf(buf + count, PAGE_SIZE,
 			  "default_qos     : %20u\n" "initial_freq    : %20lu\n"
 			  "min_freq        : %20u\n" "max_freq        : %20u\n"
@@ -111,10 +111,8 @@ if( data->max_freq==1794000)
 			  "use_switch_clk  : %20s\n",
 			  data->default_qos, data->devfreq_profile.initial_freq,
 			  data->min_freq, data->max_freq, data->boot_qos_timeout, data->max_state,
-				
 			  data->use_switch_clk ? "true" : "false");
-if( data->max_freq==1794000)
-					 data->max_freq=2002000;
+
 	count += snprintf(buf + count, PAGE_SIZE, "\n<Governor data>\n");
 	count += snprintf(buf + count, PAGE_SIZE,
 			  "governor_name   : %20s\n" "use_get_dev     : %20s\n"
@@ -470,7 +468,6 @@ static ssize_t store_scaling_devfreq_min(struct device *dev,
 }
 
 static DEVICE_ATTR(scaling_devfreq_min, 0640, show_scaling_devfreq_min, store_scaling_devfreq_min);
-
 
 /* get frequency and delay time data from string */
 static unsigned int *get_tokenized_data(const char *buf, int *num_tokens)
@@ -925,17 +922,12 @@ static int exynos_devfreq_parse_dt(struct device_node *np, struct exynos_devfreq
 	if (of_property_read_u32_array(np, "freq_info", (u32 *)&freq_array,
 				       (size_t)(ARRAY_SIZE(freq_array))))
 		return -ENODEV;
-	if(freq_array[4]==1794000){
-		freq_array[4]=2002000;
-		data->max_freq=2002000;}
+
 	data->devfreq_profile.initial_freq = freq_array[0];
 	data->default_qos = freq_array[1];
 	data->devfreq_profile.suspend_freq = freq_array[2];
 	data->min_freq = freq_array[3];
-
-	
 	data->max_freq = freq_array[4];
-
 	data->reboot_freq = freq_array[5];
 
 	if (of_property_read_u32_array(np, "boot_info", (u32 *)&boot_array,
@@ -1110,8 +1102,7 @@ static int exynos_devfreq_parse_dt(struct device_node *np, struct exynos_devfreq
 		return -ENODEV;
 
 	if (!strcmp(use_tmu, "true")) {
-		//data->use_tmu = true;
-		data->use_tmu = false;
+		data->use_tmu = true;
 	} else if (!strcmp(use_tmu, "false")) {
 		data->use_tmu = false;
 	} else {
@@ -1390,7 +1381,7 @@ static int exynos_init_freq_table(struct exynos_devfreq_data *data)
 	for (i = 0; i < data->max_state; i++) {
 		freq = data->opp_list[i].freq;
 		volt = data->opp_list[i].volt;
-		
+
 		data->devfreq_profile.freq_table[i] = freq;
 
 		ret = dev_pm_opp_add(data->dev, freq, volt);

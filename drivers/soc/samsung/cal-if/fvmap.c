@@ -13,7 +13,6 @@
 
 #define FVMAP_SIZE		(SZ_8K)
 #define STEP_UV			(6250)
-
 void __iomem *fvmap_base;
 void __iomem *sram_fvmap_base;
 
@@ -212,13 +211,49 @@ int fvmap_get_voltage_table(unsigned int id, unsigned int *table)
 	fvmap_header = fvmap_base;
 	fv_table = fvmap_base + fvmap_header[idx].o_ratevolt;
 	num_of_lv = fvmap_header[idx].num_of_lv;
-
+	int minhker;
 	for (i = 0; i < num_of_lv; i++)
-	{
-		
+	{	if(num_of_lv==18){
+			//	for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1168750;
+				fv_table->table[1].volt=1131250;
+				fv_table->table[2].volt=1043750; //1794
+				fv_table->table[3].volt=1031250;
+				fv_table->table[15].volt=593750;
+				fv_table->table[16].volt=587500;
+				//fv_table->table[16].volt=581250‬;
+		}
+		if(num_of_lv==17){
+				//for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1262500;//1143750
+				fv_table->table[1].volt=1262500;//1143750 2392
+				fv_table->table[2].volt=1193750;//1143750 //2288
+				fv_table->table[3].volt=1143750;//2184
+				//fv_table->table[15].volt=600000;//
+				//fv_table->table[16].volt=593750;//
+		}
+		if(num_of_lv==9){
+				fv_table->table[0].volt=1106250; //1300
+				fv_table->table[5].volt=650000;
+				fv_table->table[6].volt=612500;
+				fv_table->table[7].volt=600000;
+				fv_table->table[8].volt=587500;//
+		}
+		if(num_of_lv==10){
+			//	fv_table->table[5].volt=650000;//1001
+				//fv_table->table[6].volt=612500;
+				//fv_table->table[7].volt=600000;
+				//fv_table->table[8].volt=587500;
+		}
 		table[i] = fv_table->table[i].volt;
-		pr_info("  fv_table->table[i].volt : %u,Minhker98fvmap_get_voltage_table\n",
-				fv_table->table[i].volt);
+		//pr_info("  num_of_lv : %u, table[i].volt : %u,Minhker98voltage_table\n",
+				//fv_table->table[i].volt,num_of_lv);
 	}
 	return num_of_lv;
 
@@ -239,8 +274,46 @@ int fvmap_get_raw_voltage_table(unsigned int id)
 	num_of_lv = fvmap_header[idx].num_of_lv;
 
 	for (i = 0; i < num_of_lv; i++)
+{if(num_of_lv==18){
+			//	for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1168750;
+				fv_table->table[1].volt=1131250;
+				fv_table->table[2].volt=1043750; //1794
+				fv_table->table[3].volt=1031250;
+				fv_table->table[15].volt=593750;
+				fv_table->table[16].volt=587500;
+				//fv_table->table[16].volt=581250‬;
+		}
+		if(num_of_lv==17){
+				//for(minhker =0 ;minhker < num_of_lv; minhker++){
+					//fv_table->table[minhker].volt-=6250;
+					//break;
+					//}
+				fv_table->table[0].volt=1262500;//1143750
+				fv_table->table[1].volt=1262500;//1143750 2392
+				fv_table->table[2].volt=1193750;//1143750 //2288
+				fv_table->table[3].volt=1143750;//2184
+				fv_table->table[15].volt=600000;//
+				fv_table->table[16].volt=593750;//
+		}
+		if(num_of_lv==9){
+				fv_table->table[0].volt=1106250; //1300
+				fv_table->table[5].volt=650000;
+				fv_table->table[6].volt=612500;
+				fv_table->table[7].volt=600000;
+				fv_table->table[8].volt=587500;//
+		}
+		if(num_of_lv==10){
+			//	fv_table->table[5].volt=650000;//1001
+				//fv_table->table[6].volt=612500;
+				//fv_table->table[7].volt=600000;
+				//fv_table->table[8].volt=587500;
+		}
 		table[i] = fv_table->table[i].volt;
-
+}
 	for (i = 0; i < num_of_lv; i++)
 		printk("dvfs id : %d  %d Khz : %d uv\n", ACPM_VCLK_TYPE | id, fv_table->table[i].rate, table[i]);
 
@@ -429,352 +502,10 @@ static void fvmap_copy_from_sram(void __iomem *map_base, void __iomem *sram_base
 <6>[    0.568150]  [7:      swapper/0:    1] Trying to unpack rootfs image as initramfs...
 */
 		for (j = 0; j < fvmap_header[i].num_of_lv; j++) {
-			if(fvmap_header[i].num_of_lv==10&&fvmap_header[i].num_of_members==7) //for mif
-			{
-				if(old->table[j].rate==2093000)
-					new->table[j].volt = old->table[j].volt=1300000;//812500
-				if(old->table[j].rate==2002000)
-					new->table[j].volt = old->table[j].volt=1300000;//812500
-				if(old->table[j].rate==1794000)
-					new->table[j].volt = old->table[j].volt=668750-6250-6250-6250;//668750
-				if(old->table[j].rate==1539000)
-					new->table[j].volt = old->table[j].volt=656250-6250-6250-6250;//668750
-				if(old->table[j].rate==1352000)
-					new->table[j].volt = old->table[j].volt=600000-6250-6250-6250;//600000
-				if(old->table[j].rate==1014000)
-					new->table[j].volt = old->table[j].volt=587500-6250-6250;//600000
-				if(old->table[j].rate==845000)
-					new->table[j].volt = old->table[j].volt=575000-6250-6250;//600000
-				if(old->table[j].rate==676000)
-					new->table[j].volt = old->table[j].volt=562500-6250-6250;//600000
-				if(old->table[j].rate==546000)
-					new->table[j].volt = old->table[j].volt=550000-6250-6250;//600000
-				if(old->table[j].rate==420000)
-					new->table[j].volt = old->table[j].volt=537500-6250-6250-6250;//600000
-				new->table[j].rate = old->table[j].rate;
-				new->table[j].volt = old->table[j].volt;
-				pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,volt_offset_percent);
-			}
-			else if(fvmap_header[i].num_of_lv==5&&fvmap_header[i].num_of_members==4) //for int
-			{
-				if(old->table[j].rate==533000)
-					new->table[j].volt = old->table[j].volt=693750-6250-6250;//706250
-				if(old->table[j].rate==333000)
-					new->table[j].volt = old->table[j].volt=600000-6250-6250;//600000
-				if(old->table[j].rate==267000)
-					new->table[j].volt = old->table[j].volt=587500-6250-6250;//600000
-				if(old->table[j].rate==133000)
-					new->table[j].volt = old->table[j].volt=575000-6250-6250;//600000
-				if(old->table[j].rate==107000)
-					new->table[j].volt = old->table[j].volt=562500-6250-6250-6250;//600000
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-			else if(fvmap_header[i].num_of_lv==17&&fvmap_header[i].num_of_members==2) //for big
-			{
-				if(old->table[j].rate==2496000)
-					new->table[j].volt = old->table[j].volt=1300000;//1143750
-				if(old->table[j].rate==2392000)
-					new->table[j].volt = old->table[j].volt=1300000;//1143750
-				if(old->table[j].rate<=2184000&&old->table[j].rate>1352000)
-					{
-						old->table[j].volt=old->table[j].volt-6250;//1143750
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate<=1352000&&old->table[j].rate>520000)
-					{
-						old->table[j].volt=old->table[j].volt-12500;//1143750
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==2288000)
-					new->table[j].volt = old->table[j].volt=1143750;//1143750
-				/*if(old->table[j].rate==2184000)
-					new->table[j].volt = old->table[j].volt=1143750-1250;//1143750
-				if(old->table[j].rate==2080000)
-					new->table[j].volt = old->table[j].volt=1087500-12500;//1087500
-				if(old->table[j].rate==1976000)
-					new->table[j].volt = old->table[j].volt=1037500-12500;//1037500
-				if(old->table[j].rate==1872000)
-					new->table[j].volt = old->table[j].volt=987500-12500;//987500
-				if(old->table[j].rate==1768000)
-					new->table[j].volt = old->table[j].volt=943750-12500;//943750
-				if(old->table[j].rate==1664000)
-					new->table[j].volt = old->table[j].volt=918750-12500;//918750
-				if(old->table[j].rate==1560000)
-					new->table[j].volt = old->table[j].volt=875000-12500;//875000
-				if(old->table[j].rate==1352000)
-					new->table[j].volt = old->table[j].volt=806250-12500;//806250
-				if(old->table[j].rate==1144000)
-					new->table[j].volt = old->table[j].volt=743750-12500;//743750
-				if(old->table[j].rate==936000)
-					new->table[j].volt = old->table[j].volt=675000;//687500
-				if(old->table[j].rate==728000)
-					new->table[j].volt = old->table[j].volt=618700;//631250
-*/
-				if(old->table[j].rate==520000)
-					new->table[j].volt = old->table[j].volt=587500-6250;//600000
-				if(old->table[j].rate==312000)
-					new->table[j].volt = old->table[j].volt=575000-6250;//600000
-				if(old->table[j].rate==208000)
-					new->table[j].volt = old->table[j].volt=562500-6250;//600000
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-
-			else if(fvmap_header[i].num_of_lv==18&&fvmap_header[i].num_of_members==4) //for litle
-			{
-				if(old->table[j].rate==2002000)
-					new->table[j].volt = old->table[j].volt=1171250;//1031250
-				if(old->table[j].rate==1898000)
-					new->table[j].volt = old->table[j].volt=1087500;//1031250
-				if(old->table[j].rate<=1690000&&old->table[j].rate>1352000)
-					{
-						old->table[j].volt=old->table[j].volt-6250;//1143750
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate<=1352000&&old->table[j].rate>546000)
-					{
-						old->table[j].volt=old->table[j].volt-12500;//1143750
-						new->table[j].volt = old->table[j].volt;
-					}
-/*
-				if(old->table[j].rate==1794000)
-					new->table[j].volt = old->table[j].volt=1031250;//1031250
-				if(old->table[j].rate==1690000)
-					new->table[j].volt = old->table[j].volt=1031250-12500;//1031250
-				if(old->table[j].rate==1586000)
-					new->table[j].volt = old->table[j].volt=950000-12500;//950000
-				if(old->table[j].rate<1586000&&old->table[j].rate>546000)
-					{
-						old->table[j].volt=old->table[j].volt-12500;
-						new->table[j].volt = old->table[j].volt;
-					}
-					//new->table[j].volt = old->table[j].volt-12500;//??
-*/
-				if(old->table[j].rate==546000)
-					new->table[j].volt = old->table[j].volt=587500-6250;//600000
-				if(old->table[j].rate==449000)
-					new->table[j].volt = old->table[j].volt=575000-6250;//600000
-				if(old->table[j].rate==343000)
-					new->table[j].volt = old->table[j].volt=562500-6250;//600000
-				if(old->table[j].rate==208000)
-					new->table[j].volt = old->table[j].volt=550000-6250;//600000
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-
-			else if(fvmap_header[i].num_of_lv==9&&fvmap_header[i].num_of_members==1) //for G3d
-			{
-				if(old->table[j].rate==1300000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//1106250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==1200000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//1006250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==1100000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//931250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==1001000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//856250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==845000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//762500
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==676000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//681250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==545000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-6250-12500;//650000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==450000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500-12500;//612500
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==343000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-18750-12500;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-
-			else if(fvmap_header[i].num_of_lv==4&&fvmap_header[i].num_of_members==2) //for fsys
-			{
-				if(old->table[j].rate==267000)
-					{
-						old->table[j].volt=old->table[j].volt-12500;//700000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==200000)
-					{
-						old->table[j].volt=old->table[j].volt-18750;//625000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate>=100000)
-					{
-						old->table[j].volt=old->table[j].volt-25000;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate>=50000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-6250;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-			else if(fvmap_header[i].num_of_lv==5&&fvmap_header[i].num_of_members==9) //for cam
-			{
-				if(old->table[j].rate==690000)
-					{
-						old->table[j].volt=old->table[j].volt-6250;//725000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==680000)
-					{
-						old->table[j].volt=old->table[j].volt-18750;//656250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==670000)
-					{
-						old->table[j].volt=old->table[j].volt-18750;//656250
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==660000)
-					{
-						old->table[j].volt=old->table[j].volt-25000;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==650000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-6250;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-			else if(fvmap_header[i].num_of_lv==5&&fvmap_header[i].num_of_members==2) //for disp
-			{
-				if(old->table[j].rate==333000)
-					{
-						old->table[j].volt=old->table[j].volt-12500;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==267000)
-					{
-						old->table[j].volt=old->table[j].volt-18750;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==222000)
-					{
-						old->table[j].volt=old->table[j].volt-25000;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==167000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-6250;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==80000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-			else if(fvmap_header[i].num_of_lv==4&&fvmap_header[i].num_of_members==3) //for aud
-			{
-				if(old->table[j].rate==1180000)
-					{
-						old->table[j].volt=old->table[j].volt-25000;//700000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==800000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==590000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-18750;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==394000)
-					{
-						old->table[j].volt=old->table[j].volt-50000;//600000
-						new->table[j].volt = old->table[j].volt;
-					}
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-			else if(fvmap_header[i].num_of_lv==2&&fvmap_header[i].num_of_members==1) //for cp
-			{
-				if(old->table[j].rate==1000000)
-					{
-						old->table[j].volt=old->table[j].volt-25000;//750000
-						new->table[j].volt = old->table[j].volt;
-					}
-				if(old->table[j].rate==800000)
-					{
-						old->table[j].volt=old->table[j].volt-25000-12500;//750000
-						new->table[j].volt = old->table[j].volt;
-					}
-				new->table[j].rate = old->table[j].rate;
-			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) ,Minhker98 edit\n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
-
-			else{  
+			
 			new->table[j].rate = old->table[j].rate;
 			new->table[j].volt = old->table[j].volt;
-			pr_info("  lv : [%7d], volt = %d uV (%d %%) \n",
-				new->table[j].rate, new->table[j].volt,
-				volt_offset_percent);
-			}
+			
 		}
 
 		for (j = 0; j < fvmap_header[i].num_of_pll; j++) {
